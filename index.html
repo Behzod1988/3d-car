@@ -9,7 +9,6 @@
     #app { position:fixed; inset:0; }
     canvas { display:block; width:100%; height:100%; touch-action:none; }
 
-    /* Top mini bar */
     #topbar{
       position:fixed; left:12px; right:12px; top:12px;
       display:flex; gap:10px; align-items:center; justify-content:space-between;
@@ -36,7 +35,6 @@
     .btn:active{ transform: translateY(1px); }
     .muted{ opacity:.75; font-weight:500; font-size:12px; }
 
-    /* Bottom panel */
     #panel{
       position:fixed; left:12px; right:12px; bottom:12px;
       z-index:10;
@@ -95,10 +93,11 @@
       white-space:nowrap;
     }
     .tag:hover{ background:rgba(255,255,255,.08); }
+
     #toast{
       position:fixed; left:50%; transform:translateX(-50%);
       bottom: calc(12px + 42vh);
-      background:rgba(0,0,0,.65);
+      background:rgba(0,0,0,.70);
       color:#fff;
       padding:10px 12px;
       border-radius:12px;
@@ -106,6 +105,23 @@
       opacity:0; pointer-events:none;
       transition:.2s;
       z-index:20;
+      max-width: calc(100vw - 24px);
+      text-align:center;
+    }
+
+    #dropHint{
+      position:fixed; inset:0;
+      display:none;
+      align-items:center; justify-content:center;
+      background:rgba(0,0,0,.35);
+      z-index:30;
+      color:#fff;
+      font-weight:800;
+      font-size:16px;
+      text-align:center;
+      padding:20px;
+      border:2px dashed rgba(255,255,255,.35);
+      box-sizing:border-box;
     }
   </style>
 </head>
@@ -115,7 +131,7 @@
 <div id="topbar">
   <div class="chip">
     <input id="file" type="file" accept=".glb,.gltf" />
-    <span class="muted">или открой по ссылке: <b>?model=model.glb</b></span>
+    <span class="muted">по умолчанию грузим <b>model.glb</b> • можно: <b>?model=URL</b></span>
   </div>
   <div class="chip">
     <button class="btn" id="export">Экспорт JSON</button>
@@ -156,12 +172,18 @@
 </div>
 
 <div id="toast"></div>
+<div id="dropHint">Перетащи сюда .glb файл</div>
 
 <script type="module">
   import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js";
   import { OrbitControls } from "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/controls/OrbitControls.js";
   import { GLTFLoader } from "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/loaders/GLTFLoader.js";
   import { DRACOLoader } from "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/loaders/DRACOLoader.js";
+
+  // ======= НАСТРОЙКА ПО УМОЛЧАНИЮ =======
+  // Если model.glb лежит рядом с index.html — трогать не нужно.
+  // Если модель на внешней ссылке (например Release) — вставь URL сюда:
+  const DEFAULT_MODEL_URL = null; // например: "https://.../model.glb"
 
   // ---------- UI DATA ----------
   const STATUS_COLORS = {
@@ -185,12 +207,18 @@
   const partsList = el("partsList");
   const partsSearch = el("partsSearch");
   const toast = el("toast");
+  const dropHint = el("dropHint");
 
-  function showToast(text){
+  function showToast(text, ms=1800){
     toast.textContent = text;
     toast.style.opacity = "1";
     clearTimeout(showToast._t);
-    showToast._t = setTimeout(()=> toast.style.opacity="0", 1400);
+    showToast._t = setTimeout(()=> toast.style.opacity="0", ms);
+  }
+
+  // Уведомление если человек случайно открыл github.com/blob вместо github.io
+  if (location.hostname === "github.com") {
+    showToast("Ты открыл github.com (страница кода). Надо открыть GitHub Pages: https://USERNAME.github.io/REPO/", 6000);
   }
 
   // Create status pills
@@ -199,7 +227,6 @@
     const b = document.createElement("div");
     b.className = "pill";
     b.textContent = s;
-    b.style.borderColor = "rgba(255,255,255,.10)";
     b.onclick = () => setStatusForSelected(s);
     statusRow.appendChild(b);
     statusButtons.set(s, b);
@@ -224,19 +251,18 @@
   const scene = new THREE.Scene();
   scene.background = new THREE.Color(0x0b0f17);
 
-  const camera = new THREE.PerspectiveCamera(45, innerWidth/innerHeight, 0.01, 200);
+  const camera = new THREE.PerspectiveCamera(45, innerWidth/innerHeight, 0.01, 2000);
   camera.position.set(2.8, 1.6, 3.2);
 
   const controls = new OrbitControls(camera, renderer.domElement);
   controls.enableDamping = true;
   controls.dampingFactor = 0.06;
   controls.enablePan = false;
-  controls.minDistance = 1.0;
-  controls.maxDistance = 10.0;
+  controls.minDistance = 0.2;
+  controls.maxDistance = 200;
   controls.rotateSpeed = 0.85;
   controls.zoomSpeed = 0.9;
 
-  // Light
   const hemi = new THREE.HemisphereLight(0xffffff, 0x223355, 1.0);
   scene.add(hemi);
 
@@ -246,9 +272,8 @@
   dir.shadow.mapSize.set(1024, 1024);
   scene.add(dir);
 
-  // simple ground (for better look)
   const ground = new THREE.Mesh(
-    new THREE.PlaneGeometry(50, 50),
+    new THREE.PlaneGeometry(500, 500),
     new THREE.MeshStandardMaterial({ color:0x0d1424, roughness:1, metalness:0 })
   );
   ground.rotation.x = -Math.PI/2;
@@ -263,11 +288,10 @@
   loader.setDRACOLoader(draco);
 
   let modelRoot = null;
-  let selectableMeshes = [];         // all Mesh parts
-  let partsByKey = new Map();        // key -> mesh
+  let selectableMeshes = [];
+  let partsByKey = new Map();
   let selected = null;
 
-  // state saved in localStorage
   const STORAGE_KEY = "car_parts_state_v1";
   let state = loadState();
 
@@ -312,11 +336,8 @@
   }
 
   function normalizeMaterial(mesh){
-    // IMPORTANT: многие детали в glb могут шарить один материал.
-    // Если менять color без clone — покрасится всё, что использует тот же материал.
     const cloneOne = (m) => {
       const c = m.clone();
-      // store original for reset
       if(!c.userData._origColor && c.color) c.userData._origColor = c.color.clone();
       if(!c.userData._origEmissive && c.emissive) c.userData._origEmissive = c.emissive.clone();
       return c;
@@ -340,9 +361,8 @@
     const apply = (m) => {
       if(!m) return;
       if(m.emissive){
-        if(on){
-          m.emissive.set(0x222222);
-        }else{
+        if(on) m.emissive.set(0x222222);
+        else {
           const orig = m.userData._origEmissive;
           if(orig) m.emissive.copy(orig);
           else m.emissive.set(0x000000);
@@ -388,65 +408,116 @@
     const maxDim = Math.max(size.x, size.y, size.z);
     const fov = camera.fov * (Math.PI / 180);
     let dist = (maxDim / 2) / Math.tan(fov / 2);
-    dist *= 1.35;
+    dist *= 1.25;
 
     camera.position.set(center.x + dist, center.y + dist*0.35, center.z + dist);
-    camera.near = Math.max(0.01, dist/200);
-    camera.far = dist*500;
+    camera.near = Math.max(0.01, dist/500);
+    camera.far = dist*5000;
     camera.updateProjectionMatrix();
 
     controls.target.copy(center);
     controls.update();
   }
 
-  function loadGLBFromURL(url){
-    clearSceneModel();
-    loader.load(url, (gltf)=>{
-      modelRoot = gltf.scene;
-      modelRoot.traverse((obj)=>{
-        if(obj.isMesh){
-          obj.castShadow = true;
-          obj.receiveShadow = true;
-          normalizeMaterial(obj);
-          selectableMeshes.push(obj);
-        }
-      });
+  // ---- Быстрая проверка LFS (когда вместо .glb отдается текст git-lfs...)
+  async function looksLikeLFSStub(url){
+    try{
+      const r = await fetch(url, { headers: { "Range":"bytes=0-200" } });
+      if(!r.ok) return false;
+      const buf = await r.arrayBuffer();
+      const head = new TextDecoder().decode(new Uint8Array(buf));
+      return head.includes("git-lfs") && head.includes("spec/v1");
+    }catch{
+      return false;
+    }
+  }
 
-      // Build keys
-      let i = 0;
-      for(const m of selectableMeshes){
-        const key = ensureUniqueKey(m.name, i++);
-        m.userData.partKey = key;
-        partsByKey.set(key, m);
-        applyStateToMesh(m);
+  function loadGLBFromURL(rawUrl){
+    const url = new URL(rawUrl, location.href).toString();
+    clearSceneModel();
+
+    showToast("Загрузка модели...", 2500);
+
+    // Сначала проверим LFS-ловушку
+    looksLikeLFSStub(url).then(isLFS => {
+      if(isLFS){
+        showToast("model.glb залит через Git LFS (Pages отдаёт текст, не модель). Переложи .glb в Releases/другой хостинг и открой через ?model=URL", 7000);
+        return;
       }
 
-      scene.add(modelRoot);
-      frameCameraToObject(modelRoot);
-      rebuildPartsList(partsSearch.value);
-      showToast("Модель загружена. Тапни по детали 👇");
-    }, undefined, (e)=>{
-      console.error(e);
-      showToast("Ошибка загрузки .glb");
+      loader.load(
+        url,
+        (gltf)=>{
+          modelRoot = gltf.scene;
+          modelRoot.traverse((obj)=>{
+            if(obj.isMesh){
+              obj.castShadow = true;
+              obj.receiveShadow = true;
+              normalizeMaterial(obj);
+              selectableMeshes.push(obj);
+            }
+          });
+
+          let i = 0;
+          for(const m of selectableMeshes){
+            const key = ensureUniqueKey(m.name, i++);
+            m.userData.partKey = key;
+            partsByKey.set(key, m);
+            applyStateToMesh(m);
+          }
+
+          scene.add(modelRoot);
+          frameCameraToObject(modelRoot);
+          rebuildPartsList(partsSearch.value);
+          showToast("Модель загружена. Тапни по детали 👇", 2200);
+        },
+        (xhr)=>{
+          if(xhr?.total){
+            const p = Math.round((xhr.loaded / xhr.total) * 100);
+            showToast("Загрузка: " + p + "%", 900);
+          } else {
+            showToast("Загрузка...", 900);
+          }
+        },
+        (e)=>{
+          console.error(e);
+          showToast("Ошибка загрузки .glb. Проверь, что открываешь через GitHub Pages и что файл доступен по /model.glb", 6000);
+        }
+      );
     });
   }
 
   function loadGLBFromFile(file){
     const url = URL.createObjectURL(file);
     loadGLBFromURL(url);
+    // освободим ссылку чуть позже
+    setTimeout(()=> URL.revokeObjectURL(url), 60_000);
   }
 
-  // URL mode: ?model=model.glb
+  // ======= AUTOLOAD =======
   const params = new URLSearchParams(location.search);
   const modelParam = params.get("model");
-  if(modelParam){
-    loadGLBFromURL(modelParam);
-  }
+
+  const urlToLoad =
+    modelParam ? modelParam
+    : (DEFAULT_MODEL_URL ? DEFAULT_MODEL_URL : "model.glb");
+
+  loadGLBFromURL(urlToLoad);
 
   // file input
   el("file").addEventListener("change", (ev)=>{
     const file = ev.target.files?.[0];
     if(file) loadGLBFromFile(file);
+  });
+
+  // Drag & Drop
+  window.addEventListener("dragover", (e)=>{ e.preventDefault(); dropHint.style.display = "flex"; });
+  window.addEventListener("dragleave", (e)=>{ e.preventDefault(); dropHint.style.display = "none"; });
+  window.addEventListener("drop", (e)=>{
+    e.preventDefault();
+    dropHint.style.display = "none";
+    const f = e.dataTransfer?.files?.[0];
+    if(f && (f.name.endsWith(".glb") || f.name.endsWith(".gltf"))) loadGLBFromFile(f);
   });
 
   // ---------- SELECT BY CLICK (RAYCAST) ----------
@@ -464,7 +535,6 @@
     const dt = performance.now() - downT;
     const moved = Math.hypot(dx,dy);
 
-    // Если палец/мышь двигался — это вращение, не клик
     if(moved > 8 || dt > 600) return;
 
     const rect = renderer.domElement.getBoundingClientRect();
@@ -492,16 +562,13 @@
     selStatus.textContent = "Статус: " + (p.status || "—");
     noteBox.value = p.note || "";
 
-    // activate correct status button
     for(const [s, b] of statusButtons){
       b.classList.toggle("active", p.status === s);
     }
 
-    // set picker to current color (or default status color)
     if(p.color) colorPicker.value = p.color;
     else if(p.status && STATUS_COLORS[p.status]) colorPicker.value = STATUS_COLORS[p.status];
 
-    // Move camera target smoothly: just set target to mesh center
     const box = new THREE.Box3().setFromObject(selected);
     const c = new THREE.Vector3();
     box.getCenter(c);
@@ -562,7 +629,6 @@
     if(!selected) return showToast("Сначала выбери деталь");
     const key = selected.userData.partKey;
 
-    // Try to restore original color if we stored it
     const restore = (m) => {
       if(m?.userData?._origColor && m.color){
         m.color.copy(m.userData._origColor);
@@ -586,7 +652,6 @@
     if(confirm("Сбросить все статусы и цвета?")){
       state = { parts:{} };
       saveState();
-      // reload materials to original (best effort)
       for(const m of selectableMeshes){
         const restore = (mat) => {
           if(mat?.userData?._origColor && mat.color){
@@ -612,14 +677,12 @@
       await navigator.clipboard.writeText(json);
       showToast("JSON скопирован в буфер обмена");
     }catch{
-      // fallback: open new window
       const w = window.open();
       w.document.write("<pre>"+json.replaceAll("<","&lt;")+"</pre>");
       showToast("Открыл JSON в новом окне");
     }
   };
 
-  // ---------- RENDER LOOP ----------
   function animate(){
     requestAnimationFrame(animate);
     controls.update();
