@@ -1,0 +1,637 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>Car 360 • Parts + Status</title>
+  <style>
+    html, body { margin:0; height:100%; background:#0b0f17; overflow:hidden; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial; }
+    #app { position:fixed; inset:0; }
+    canvas { display:block; width:100%; height:100%; touch-action:none; }
+
+    /* Top mini bar */
+    #topbar{
+      position:fixed; left:12px; right:12px; top:12px;
+      display:flex; gap:10px; align-items:center; justify-content:space-between;
+      z-index:10;
+      pointer-events:none;
+    }
+    .chip{
+      pointer-events:auto;
+      display:flex; gap:10px; align-items:center;
+      background:rgba(20,26,40,.72); backdrop-filter: blur(10px);
+      border:1px solid rgba(255,255,255,.08);
+      border-radius:14px;
+      padding:10px 12px;
+      color:#e8eefc;
+      box-shadow: 0 10px 30px rgba(0,0,0,.25);
+    }
+    #file { color:#e8eefc; }
+    .btn{
+      cursor:pointer; border:1px solid rgba(255,255,255,.10);
+      background:rgba(255,255,255,.06);
+      color:#e8eefc; padding:10px 12px; border-radius:12px;
+      font-weight:600;
+    }
+    .btn:active{ transform: translateY(1px); }
+    .muted{ opacity:.75; font-weight:500; font-size:12px; }
+
+    /* Bottom panel */
+    #panel{
+      position:fixed; left:12px; right:12px; bottom:12px;
+      z-index:10;
+      background:rgba(20,26,40,.78); backdrop-filter: blur(10px);
+      border:1px solid rgba(255,255,255,.10);
+      border-radius:18px;
+      box-shadow: 0 20px 50px rgba(0,0,0,.35);
+      overflow:hidden;
+      max-height: 40vh;
+      display:flex; flex-direction:column;
+    }
+    #panelHeader{
+      display:flex; align-items:center; justify-content:space-between;
+      padding:12px 14px;
+      border-bottom:1px solid rgba(255,255,255,.08);
+      color:#e8eefc;
+      gap:12px;
+    }
+    #panelHeader strong{ font-size:14px; }
+    #toggle{ width:42px; text-align:center; }
+    #panelBody{ padding:12px 14px; color:#e8eefc; overflow:auto; }
+
+    .row{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+    .pill{
+      cursor:pointer;
+      border:1px solid rgba(255,255,255,.10);
+      background:rgba(255,255,255,.06);
+      padding:8px 10px; border-radius:999px;
+      font-size:13px; font-weight:700;
+      user-select:none;
+    }
+    .pill.active{ outline:2px solid rgba(255,255,255,.25); }
+    .field{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-top:10px; }
+    input[type="text"], textarea{
+      width:100%;
+      background:rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.10);
+      border-radius:12px; padding:10px 12px;
+      color:#e8eefc;
+      outline:none;
+    }
+    textarea{ min-height:70px; resize:none; }
+
+    #partsWrap{ margin-top:10px; }
+    #partsSearch{ margin-top:8px; }
+    #partsList{
+      margin-top:8px; display:flex; flex-wrap:wrap; gap:8px;
+      max-height: 120px; overflow:auto; padding-bottom:4px;
+    }
+    .tag{
+      cursor:pointer;
+      font-size:12px;
+      padding:7px 9px; border-radius:999px;
+      background:rgba(255,255,255,.05);
+      border:1px solid rgba(255,255,255,.09);
+      white-space:nowrap;
+    }
+    .tag:hover{ background:rgba(255,255,255,.08); }
+    #toast{
+      position:fixed; left:50%; transform:translateX(-50%);
+      bottom: calc(12px + 42vh);
+      background:rgba(0,0,0,.65);
+      color:#fff;
+      padding:10px 12px;
+      border-radius:12px;
+      font-size:13px;
+      opacity:0; pointer-events:none;
+      transition:.2s;
+      z-index:20;
+    }
+  </style>
+</head>
+<body>
+<div id="app"></div>
+
+<div id="topbar">
+  <div class="chip">
+    <input id="file" type="file" accept=".glb,.gltf" />
+    <span class="muted">или открой по ссылке: <b>?model=model.glb</b></span>
+  </div>
+  <div class="chip">
+    <button class="btn" id="export">Экспорт JSON</button>
+    <button class="btn" id="reset">Сброс</button>
+  </div>
+</div>
+
+<div id="panel">
+  <div id="panelHeader">
+    <div>
+      <strong>Выбрано:</strong> <span id="selName">—</span>
+      <div class="muted" id="selStatus">Статус: —</div>
+    </div>
+    <button class="btn" id="toggle">⌄</button>
+  </div>
+  <div id="panelBody">
+    <div class="row" id="statusRow"></div>
+
+    <div class="field">
+      <div class="muted">Цвет:</div>
+      <input type="color" id="color" value="#4aa3ff" />
+      <button class="btn" id="applyColor">Применить цвет</button>
+      <button class="btn" id="clearPart">Очистить деталь</button>
+    </div>
+
+    <div class="field">
+      <div class="muted">Заметка (необязательно):</div>
+      <textarea id="note" placeholder="Например: 'царапина 3 см'"></textarea>
+      <button class="btn" id="saveNote">Сохранить заметку</button>
+    </div>
+
+    <div id="partsWrap">
+      <div class="muted">Быстрый выбор детали (по имени из Blender):</div>
+      <input id="partsSearch" type="text" placeholder="Поиск детали: дверь, капот, бампер..." />
+      <div id="partsList"></div>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script type="module">
+  import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js";
+  import { OrbitControls } from "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/controls/OrbitControls.js";
+  import { GLTFLoader } from "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/loaders/GLTFLoader.js";
+  import { DRACOLoader } from "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/loaders/DRACOLoader.js";
+
+  // ---------- UI DATA ----------
+  const STATUS_COLORS = {
+    "Родное":   "#4aa3ff",
+    "Покрашено":"#ffd166",
+    "Царапина": "#ff6b6b",
+    "Вмятина":  "#a78bfa",
+    "Трещина":  "#ff9f1c",
+    "Пятно":    "#2dd4bf",
+    "Замена":   "#f97316",
+    "Критично": "#ef4444"
+  };
+  const STATUSES = Object.keys(STATUS_COLORS);
+
+  const el = (id) => document.getElementById(id);
+  const statusRow = el("statusRow");
+  const selName = el("selName");
+  const selStatus = el("selStatus");
+  const colorPicker = el("color");
+  const noteBox = el("note");
+  const partsList = el("partsList");
+  const partsSearch = el("partsSearch");
+  const toast = el("toast");
+
+  function showToast(text){
+    toast.textContent = text;
+    toast.style.opacity = "1";
+    clearTimeout(showToast._t);
+    showToast._t = setTimeout(()=> toast.style.opacity="0", 1400);
+  }
+
+  // Create status pills
+  const statusButtons = new Map();
+  for(const s of STATUSES){
+    const b = document.createElement("div");
+    b.className = "pill";
+    b.textContent = s;
+    b.style.borderColor = "rgba(255,255,255,.10)";
+    b.onclick = () => setStatusForSelected(s);
+    statusRow.appendChild(b);
+    statusButtons.set(s, b);
+  }
+
+  // Panel collapse
+  let panelOpen = true;
+  el("toggle").onclick = () => {
+    panelOpen = !panelOpen;
+    el("panelBody").style.display = panelOpen ? "block" : "none";
+    el("toggle").textContent = panelOpen ? "⌄" : "⌃";
+  };
+
+  // ---------- THREE.JS SETUP ----------
+  const app = document.getElementById("app");
+  const renderer = new THREE.WebGLRenderer({ antialias:true, alpha:true });
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+  renderer.setSize(innerWidth, innerHeight);
+  renderer.shadowMap.enabled = true;
+  app.appendChild(renderer.domElement);
+
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x0b0f17);
+
+  const camera = new THREE.PerspectiveCamera(45, innerWidth/innerHeight, 0.01, 200);
+  camera.position.set(2.8, 1.6, 3.2);
+
+  const controls = new OrbitControls(camera, renderer.domElement);
+  controls.enableDamping = true;
+  controls.dampingFactor = 0.06;
+  controls.enablePan = false;
+  controls.minDistance = 1.0;
+  controls.maxDistance = 10.0;
+  controls.rotateSpeed = 0.85;
+  controls.zoomSpeed = 0.9;
+
+  // Light
+  const hemi = new THREE.HemisphereLight(0xffffff, 0x223355, 1.0);
+  scene.add(hemi);
+
+  const dir = new THREE.DirectionalLight(0xffffff, 1.15);
+  dir.position.set(5, 6, 3);
+  dir.castShadow = true;
+  dir.shadow.mapSize.set(1024, 1024);
+  scene.add(dir);
+
+  // simple ground (for better look)
+  const ground = new THREE.Mesh(
+    new THREE.PlaneGeometry(50, 50),
+    new THREE.MeshStandardMaterial({ color:0x0d1424, roughness:1, metalness:0 })
+  );
+  ground.rotation.x = -Math.PI/2;
+  ground.position.y = -0.01;
+  ground.receiveShadow = true;
+  scene.add(ground);
+
+  // ---------- MODEL + PARTS ----------
+  const loader = new GLTFLoader();
+  const draco = new DRACOLoader();
+  draco.setDecoderPath("https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/libs/draco/");
+  loader.setDRACOLoader(draco);
+
+  let modelRoot = null;
+  let selectableMeshes = [];         // all Mesh parts
+  let partsByKey = new Map();        // key -> mesh
+  let selected = null;
+
+  // state saved in localStorage
+  const STORAGE_KEY = "car_parts_state_v1";
+  let state = loadState();
+
+  function loadState(){
+    try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || { parts:{} }; }
+    catch { return { parts:{} }; }
+  }
+  function saveState(){
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  }
+
+  function clearSceneModel(){
+    if(modelRoot){
+      scene.remove(modelRoot);
+      modelRoot.traverse(obj => {
+        if(obj.isMesh){
+          obj.geometry?.dispose?.();
+          if(Array.isArray(obj.material)) obj.material.forEach(m=>m.dispose?.());
+          else obj.material?.dispose?.();
+        }
+      });
+    }
+    modelRoot = null;
+    selectableMeshes = [];
+    partsByKey.clear();
+    selected = null;
+    selName.textContent = "—";
+    selStatus.textContent = "Статус: —";
+    noteBox.value = "";
+    rebuildPartsList();
+  }
+
+  function ensureUniqueKey(name, idx){
+    const base = (name && name.trim()) ? name.trim() : `part_${idx}`;
+    let key = base;
+    let n = 1;
+    while(partsByKey.has(key)){
+      n++;
+      key = `${base}#${n}`;
+    }
+    return key;
+  }
+
+  function normalizeMaterial(mesh){
+    // IMPORTANT: многие детали в glb могут шарить один материал.
+    // Если менять color без clone — покрасится всё, что использует тот же материал.
+    const cloneOne = (m) => {
+      const c = m.clone();
+      // store original for reset
+      if(!c.userData._origColor && c.color) c.userData._origColor = c.color.clone();
+      if(!c.userData._origEmissive && c.emissive) c.userData._origEmissive = c.emissive.clone();
+      return c;
+    };
+    if(Array.isArray(mesh.material)) mesh.material = mesh.material.map(cloneOne);
+    else mesh.material = cloneOne(mesh.material);
+  }
+
+  function setMaterialColor(mesh, hex){
+    const apply = (m) => {
+      if(m && m.color){
+        m.color.set(hex);
+        m.needsUpdate = true;
+      }
+    };
+    if(Array.isArray(mesh.material)) mesh.material.forEach(apply);
+    else apply(mesh.material);
+  }
+
+  function setHighlight(mesh, on){
+    const apply = (m) => {
+      if(!m) return;
+      if(m.emissive){
+        if(on){
+          m.emissive.set(0x222222);
+        }else{
+          const orig = m.userData._origEmissive;
+          if(orig) m.emissive.copy(orig);
+          else m.emissive.set(0x000000);
+        }
+        m.needsUpdate = true;
+      }
+    };
+    if(Array.isArray(mesh.material)) mesh.material.forEach(apply);
+    else apply(mesh.material);
+  }
+
+  function applyStateToMesh(mesh){
+    const key = mesh.userData.partKey;
+    const p = state.parts[key];
+    if(!p) return;
+    if(p.color) setMaterialColor(mesh, p.color);
+  }
+
+  function rebuildPartsList(filter=""){
+    partsList.innerHTML = "";
+    const f = filter.trim().toLowerCase();
+    const keys = Array.from(partsByKey.keys()).sort((a,b)=>a.localeCompare(b, "ru"));
+    for(const k of keys){
+      if(f && !k.toLowerCase().includes(f)) continue;
+      const t = document.createElement("div");
+      t.className = "tag";
+      const p = state.parts[k];
+      const short = p?.status ? ` • ${p.status}` : "";
+      t.textContent = k + short;
+      t.onclick = () => selectMesh(partsByKey.get(k));
+      partsList.appendChild(t);
+    }
+  }
+  partsSearch.addEventListener("input", () => rebuildPartsList(partsSearch.value));
+
+  function frameCameraToObject(obj){
+    const box = new THREE.Box3().setFromObject(obj);
+    const size = new THREE.Vector3();
+    const center = new THREE.Vector3();
+    box.getSize(size);
+    box.getCenter(center);
+
+    const maxDim = Math.max(size.x, size.y, size.z);
+    const fov = camera.fov * (Math.PI / 180);
+    let dist = (maxDim / 2) / Math.tan(fov / 2);
+    dist *= 1.35;
+
+    camera.position.set(center.x + dist, center.y + dist*0.35, center.z + dist);
+    camera.near = Math.max(0.01, dist/200);
+    camera.far = dist*500;
+    camera.updateProjectionMatrix();
+
+    controls.target.copy(center);
+    controls.update();
+  }
+
+  function loadGLBFromURL(url){
+    clearSceneModel();
+    loader.load(url, (gltf)=>{
+      modelRoot = gltf.scene;
+      modelRoot.traverse((obj)=>{
+        if(obj.isMesh){
+          obj.castShadow = true;
+          obj.receiveShadow = true;
+          normalizeMaterial(obj);
+          selectableMeshes.push(obj);
+        }
+      });
+
+      // Build keys
+      let i = 0;
+      for(const m of selectableMeshes){
+        const key = ensureUniqueKey(m.name, i++);
+        m.userData.partKey = key;
+        partsByKey.set(key, m);
+        applyStateToMesh(m);
+      }
+
+      scene.add(modelRoot);
+      frameCameraToObject(modelRoot);
+      rebuildPartsList(partsSearch.value);
+      showToast("Модель загружена. Тапни по детали 👇");
+    }, undefined, (e)=>{
+      console.error(e);
+      showToast("Ошибка загрузки .glb");
+    });
+  }
+
+  function loadGLBFromFile(file){
+    const url = URL.createObjectURL(file);
+    loadGLBFromURL(url);
+  }
+
+  // URL mode: ?model=model.glb
+  const params = new URLSearchParams(location.search);
+  const modelParam = params.get("model");
+  if(modelParam){
+    loadGLBFromURL(modelParam);
+  }
+
+  // file input
+  el("file").addEventListener("change", (ev)=>{
+    const file = ev.target.files?.[0];
+    if(file) loadGLBFromFile(file);
+  });
+
+  // ---------- SELECT BY CLICK (RAYCAST) ----------
+  const raycaster = new THREE.Raycaster();
+  const pointer = new THREE.Vector2();
+
+  let downX=0, downY=0, downT=0;
+  renderer.domElement.addEventListener("pointerdown", (e)=>{
+    downX = e.clientX; downY = e.clientY; downT = performance.now();
+  }, { passive:true });
+
+  renderer.domElement.addEventListener("pointerup", (e)=>{
+    const dx = e.clientX - downX;
+    const dy = e.clientY - downY;
+    const dt = performance.now() - downT;
+    const moved = Math.hypot(dx,dy);
+
+    // Если палец/мышь двигался — это вращение, не клик
+    if(moved > 8 || dt > 600) return;
+
+    const rect = renderer.domElement.getBoundingClientRect();
+    pointer.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+    pointer.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+
+    raycaster.setFromCamera(pointer, camera);
+    const hits = raycaster.intersectObjects(selectableMeshes, true);
+    if(hits.length){
+      selectMesh(hits[0].object);
+    }
+  }, { passive:true });
+
+  function selectMesh(mesh){
+    if(!mesh) return;
+
+    if(selected && selected !== mesh) setHighlight(selected, false);
+    selected = mesh;
+    setHighlight(selected, true);
+
+    const key = selected.userData.partKey;
+    selName.textContent = key;
+
+    const p = state.parts[key] || {};
+    selStatus.textContent = "Статус: " + (p.status || "—");
+    noteBox.value = p.note || "";
+
+    // activate correct status button
+    for(const [s, b] of statusButtons){
+      b.classList.toggle("active", p.status === s);
+    }
+
+    // set picker to current color (or default status color)
+    if(p.color) colorPicker.value = p.color;
+    else if(p.status && STATUS_COLORS[p.status]) colorPicker.value = STATUS_COLORS[p.status];
+
+    // Move camera target smoothly: just set target to mesh center
+    const box = new THREE.Box3().setFromObject(selected);
+    const c = new THREE.Vector3();
+    box.getCenter(c);
+    controls.target.copy(c);
+    controls.update();
+  }
+
+  function setStatusForSelected(status){
+    if(!selected) return showToast("Сначала выбери деталь");
+    const key = selected.userData.partKey;
+
+    const color = STATUS_COLORS[status] || colorPicker.value;
+    setMaterialColor(selected, color);
+
+    state.parts[key] = {
+      ...(state.parts[key] || {}),
+      status,
+      color,
+      note: noteBox.value || ""
+    };
+    saveState();
+
+    selStatus.textContent = "Статус: " + status;
+    colorPicker.value = color;
+
+    for(const [s, b] of statusButtons){
+      b.classList.toggle("active", s === status);
+    }
+    rebuildPartsList(partsSearch.value);
+  }
+
+  el("applyColor").onclick = () => {
+    if(!selected) return showToast("Сначала выбери деталь");
+    const key = selected.userData.partKey;
+    const color = colorPicker.value;
+
+    setMaterialColor(selected, color);
+    state.parts[key] = {
+      ...(state.parts[key] || {}),
+      color,
+      status: (state.parts[key]?.status || "—"),
+      note: noteBox.value || ""
+    };
+    saveState();
+    rebuildPartsList(partsSearch.value);
+    showToast("Цвет применён");
+  };
+
+  el("saveNote").onclick = () => {
+    if(!selected) return showToast("Сначала выбери деталь");
+    const key = selected.userData.partKey;
+    state.parts[key] = { ...(state.parts[key] || {}), note: noteBox.value || "" };
+    saveState();
+    showToast("Заметка сохранена");
+  };
+
+  el("clearPart").onclick = () => {
+    if(!selected) return showToast("Сначала выбери деталь");
+    const key = selected.userData.partKey;
+
+    // Try to restore original color if we stored it
+    const restore = (m) => {
+      if(m?.userData?._origColor && m.color){
+        m.color.copy(m.userData._origColor);
+        m.needsUpdate = true;
+      }
+    };
+    if(Array.isArray(selected.material)) selected.material.forEach(restore);
+    else restore(selected.material);
+
+    delete state.parts[key];
+    saveState();
+
+    selStatus.textContent = "Статус: —";
+    for(const [, b] of statusButtons) b.classList.remove("active");
+    noteBox.value = "";
+    rebuildPartsList(partsSearch.value);
+    showToast("Деталь очищена");
+  };
+
+  el("reset").onclick = () => {
+    if(confirm("Сбросить все статусы и цвета?")){
+      state = { parts:{} };
+      saveState();
+      // reload materials to original (best effort)
+      for(const m of selectableMeshes){
+        const restore = (mat) => {
+          if(mat?.userData?._origColor && mat.color){
+            mat.color.copy(mat.userData._origColor);
+            mat.needsUpdate = true;
+          }
+          if(mat?.userData?._origEmissive && mat.emissive){
+            mat.emissive.copy(mat.userData._origEmissive);
+            mat.needsUpdate = true;
+          }
+        };
+        if(Array.isArray(m.material)) m.material.forEach(restore);
+        else restore(m.material);
+      }
+      rebuildPartsList(partsSearch.value);
+      showToast("Сброшено");
+    }
+  };
+
+  el("export").onclick = async () => {
+    const json = JSON.stringify(state, null, 2);
+    try{
+      await navigator.clipboard.writeText(json);
+      showToast("JSON скопирован в буфер обмена");
+    }catch{
+      // fallback: open new window
+      const w = window.open();
+      w.document.write("<pre>"+json.replaceAll("<","&lt;")+"</pre>");
+      showToast("Открыл JSON в новом окне");
+    }
+  };
+
+  // ---------- RENDER LOOP ----------
+  function animate(){
+    requestAnimationFrame(animate);
+    controls.update();
+    renderer.render(scene, camera);
+  }
+  animate();
+
+  addEventListener("resize", ()=>{
+    camera.aspect = innerWidth/innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(innerWidth, innerHeight);
+  });
+</script>
+</body>
+</html>
