@@ -1,465 +1,604 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>3D Машина - Интерактивный просмотр</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.min.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-            color: #f0f0f0; min-height: 100vh; overflow-x: hidden;
-        }
-        .container { max-width: 100%; padding: 20px; }
-        header {
-            text-align: center; margin-bottom: 30px; padding: 20px;
-            background: rgba(255,255,255,0.05); border-radius: 15px;
-            border: 1px solid rgba(255,255,255,0.1);
-        }
-        h1 { font-size: 2.5rem; margin-bottom: 10px; color: #fff; text-shadow: 0 2px 10px rgba(0,0,0,0.3); }
-        h1 i { color: #3498db; margin-right: 15px; }
-        .subtitle { font-size: 1.1rem; color: #aaa; margin-bottom: 0; }
-        .main-content { display: flex; flex-wrap: wrap; gap: 30px; margin-bottom: 30px; }
-        .scene-container {
-            flex: 3; min-width: 300px; background: rgba(0,0,0,0.3);
-            border-radius: 15px; padding: 15px; position: relative;
-            min-height: 600px; border: 1px solid rgba(255,255,255,0.1);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.4);
-        }
-        #scene { width: 100%; height: 100%; min-height: 550px; border-radius: 10px; overflow: hidden; }
-        #loading {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.8); display: flex; flex-direction: column;
-            justify-content: center; align-items: center; z-index: 100; border-radius: 10px;
-        }
-        .spinner {
-            width: 60px; height: 60px; border: 5px solid rgba(255,255,255,0.1);
-            border-top: 5px solid #3498db; border-radius: 50%;
-            animation: spin 1s linear infinite; margin-bottom: 20px;
-        }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        .hint {
-            margin-top: 15px; padding: 10px; background: rgba(52,152,219,0.2);
-            border-radius: 8px; font-size: 0.9rem; text-align: center; color: #a0d2f7;
-        }
-        .hint i { margin: 0 5px; }
-        .control-panel {
-            flex: 1; min-width: 300px; background: rgba(30,30,46,0.8);
-            border-radius: 15px; padding: 25px; border: 1px solid rgba(255,255,255,0.1);
-            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
-        }
-        .panel-section {
-            margin-bottom: 30px; padding-bottom: 25px;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
-        }
-        .panel-section:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
-        .panel-section h3 {
-            font-size: 1.3rem; margin-bottom: 20px; color: #fff;
-            display: flex; align-items: center;
-        }
-        .panel-section h3 i { margin-right: 10px; color: #3498db; }
-        .part-info { background: rgba(255,255,255,0.05); padding: 15px; border-radius: 10px; }
-        .info-item { display: flex; justify-content: space-between; margin-bottom: 10px; }
-        .info-item:last-child { margin-bottom: 0; }
-        .label { font-weight: 600; color: #aaa; }
-        .value { color: #fff; font-weight: 500; }
-        .status-default { color: #95a5a6; } .status-ok { color: #2ecc71; }
-        .status-repair { color: #f39c12; } .status-replace { color: #9b59b6; }
-        .status-inspected { color: #3498db; } .status-problem { color: #e74c3c; }
-        .color-controls { display: flex; flex-direction: column; gap: 15px; }
-        .color-preview {
-            width: 100%; height: 60px; border-radius: 10px;
-            background-color: #3498db; border: 3px solid rgba(255,255,255,0.2);
-        }
-        .color-presets { display: flex; gap: 10px; margin-top: 10px; }
-        .preset {
-            width: 40px; height: 40px; border-radius: 8px; cursor: pointer;
-            transition: transform 0.2s, border 0.2s; border: 2px solid transparent;
-        }
-        .preset:hover { transform: scale(1.1); border: 2px solid white; }
-        input[type="color"] {
-            width: 100%; height: 45px; border: none; border-radius: 8px;
-            cursor: pointer; background: transparent;
-        }
-        .select-box, .btn {
-            width: 100%; padding: 14px; border-radius: 10px;
-            border: none; font-size: 1rem; margin-bottom: 12px;
-        }
-        .select-box {
-            background: rgba(255,255,255,0.1); color: white; cursor: pointer;
-            border: 1px solid rgba(255,255,255,0.2);
-        }
-        .btn {
-            background: linear-gradient(to right, #3498db, #2ecc71);
-            color: white; font-weight: 600; cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
-            display: flex; align-items: center; justify-content: center; gap: 10px;
-        }
-        .btn:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
-        .help-text {
-            margin-bottom: 10px; color: #bbb; font-size: 0.95rem; line-height: 1.5;
-        }
-        footer {
-            text-align: center; padding: 20px; color: #777;
-            font-size: 0.9rem; border-top: 1px solid rgba(255,255,255,0.1);
-        }
-        @media (max-width: 1100px) {
-            .main-content { flex-direction: column; }
-            .scene-container, .control-panel { min-width: 100%; }
-            h1 { font-size: 2rem; }
-        }
-    </style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Кликабельная машина (SVG детали)</title>
+  <style>
+    :root{
+      --bg:#0b1220; --card:#101a2e; --muted:#7f8aa3; --text:#e9eefc;
+      --line:rgba(255,255,255,.12); --accent:#3b82f6;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;
+      background:linear-gradient(180deg,#070c16, #0b1220 30%, #070c16);
+      color:var(--text);
+    }
+    .wrap{max-width:1100px;margin:0 auto;padding:14px;display:grid;gap:12px}
+    .grid{display:grid;grid-template-columns:1.3fr .7fr;gap:12px}
+    @media (max-width: 900px){ .grid{grid-template-columns:1fr} }
+    .card{background:rgba(16,26,46,.85);border:1px solid var(--line);
+      border-radius:16px;box-shadow:0 12px 30px rgba(0,0,0,.35);overflow:hidden;
+    }
+    .head{padding:12px 14px;border-bottom:1px solid var(--line);display:flex;gap:10px;align-items:center;justify-content:space-between}
+    .title{font-weight:700;letter-spacing:.2px}
+    .sub{font-size:12px;color:var(--muted)}
+    .body{padding:12px 14px}
+    .row{display:flex;gap:10px;flex-wrap:wrap}
+    button, select, input{
+      background:#0c1528;border:1px solid var(--line);color:var(--text);
+      border-radius:12px;padding:10px 12px;font-weight:600;
+    }
+    button{cursor:pointer}
+    button:hover{border-color:rgba(255,255,255,.25)}
+    button.primary{background:linear-gradient(180deg, rgba(59,130,246,.9), rgba(59,130,246,.65)); border-color:rgba(59,130,246,.45)}
+    .pill{padding:6px 10px;border:1px solid var(--line);border-radius:999px;font-size:12px;color:var(--muted)}
+    .split{display:grid;grid-template-columns:1fr;gap:10px}
+    .k{font-size:12px;color:var(--muted)}
+    .v{font-weight:700}
+    .list{display:grid;gap:8px;max-height:320px;overflow:auto;padding-right:4px}
+    .item{
+      display:flex;align-items:center;justify-content:space-between;gap:10px;
+      padding:10px 10px;border:1px solid var(--line);border-radius:14px;background:rgba(12,21,40,.6);
+      cursor:pointer;
+    }
+    .item:hover{border-color:rgba(255,255,255,.25)}
+    .item.active{outline:2px solid rgba(59,130,246,.55);border-color:rgba(59,130,246,.55)}
+    .badge{font-size:11px;color:var(--muted)}
+    .dot{width:12px;height:12px;border-radius:999px;border:1px solid rgba(255,255,255,.25)}
+    .hint{font-size:12px;color:var(--muted);line-height:1.35}
+    .svgwrap{
+      width:100%; height:min(60vh,520px);
+      border-radius:14px; border:1px solid var(--line);
+      background:radial-gradient(1200px 500px at 50% 20%, rgba(59,130,246,.08), transparent 55%),
+                 linear-gradient(180deg, rgba(255,255,255,.02), transparent);
+      overflow:hidden;
+      touch-action:none; /* важно для pinch */
+      position:relative;
+    }
+    svg{width:100%;height:100%;display:block}
+    .part{
+      stroke:rgba(255,255,255,.35); stroke-width:2; vector-effect:non-scaling-stroke;
+      fill:rgba(255,255,255,.06);
+      cursor:pointer;
+      transition:filter .15s, fill .15s, stroke .15s, opacity .15s;
+    }
+    .part:hover{filter:drop-shadow(0 0 8px rgba(59,130,246,.22));stroke:rgba(255,255,255,.55)}
+    .part.selected{stroke:rgba(59,130,246,.95); filter:drop-shadow(0 0 10px rgba(59,130,246,.35))}
+    .label{
+      font-size:12px; fill:rgba(255,255,255,.75);
+      paint-order:stroke; stroke:rgba(0,0,0,.55); stroke-width:4;
+    }
+    .statusTag{font-size:12px;color:var(--muted)}
+    textarea{width:100%;min-height:130px;border-radius:14px;padding:10px 12px;resize:vertical}
+  </style>
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1><i class="fas fa-car"></i> Интерактивная 3D Машина</h1>
-            <p class="subtitle">Вращайте, выделяйте детали и изменяйте цвета</p>
-        </header>
+  <div class="wrap">
+    <div class="card">
+      <div class="head">
+        <div>
+          <div class="title">Кликабельная машина (по деталям)</div>
+          <div class="sub">Тапни по детали → выбери статус/цвет → экспорт в JSON</div>
+        </div>
+        <span class="pill" id="zoomPill">Зум: 100%</span>
+      </div>
+      <div class="body grid">
+        <div class="card" style="background:transparent;border:none;box-shadow:none">
+          <div class="svgwrap" id="stage">
+            <!-- SVG: вид сбоку (упрощённо, но по деталям). Ты можешь заменить формы на свои. -->
+            <svg id="svg" viewBox="0 0 980 420" xmlns="http://www.w3.org/2000/svg">
+              <!-- фон линия земли -->
+              <path d="M40 330 H940" stroke="rgba(255,255,255,.12)" stroke-width="4" />
 
-        <div class="main-content">
-            <div class="scene-container">
-                <div id="loading">
-                    <div class="spinner"></div>
-                    <p>Загрузка 3D модели...</p>
-                </div>
-                <div id="scene"></div>
-                <div class="hint">
-                    <i class="fas fa-mouse-pointer"></i> ЛКМ — вращать | Колесико — приближать | <i class="fas fa-hand-pointer"></i> Клик — выбрать деталь
-                </div>
-            </div>
+              <!-- кузов общий (как подложка, не кликаем) -->
+              <path d="M170 305
+                       C170 250 205 245 240 235
+                       L320 210
+                       C360 150 420 120 520 120
+                       L640 120
+                       C705 120 760 160 800 215
+                       L860 235
+                       C910 248 920 270 920 305
+                       L920 305
+                       L170 305 Z"
+                    fill="rgba(255,255,255,.03)" stroke="rgba(255,255,255,.10)" stroke-width="3"/>
 
-            <div class="control-panel">
-                <div class="panel-section">
-                    <h3><i class="fas fa-crosshairs"></i> Выделенная деталь</h3>
-                    <div class="part-info">
-                        <div class="info-item">
-                            <span class="label">Название:</span>
-                            <span id="partName" class="value">— не выбрано —</span>
-                        </div>
-                        <div class="info-item">
-                            <span class="label">Статус:</span>
-                            <span id="partStatus" class="value status-default">не задан</span>
-                        </div>
-                    </div>
-                </div>
+              <!-- ДВЕРЬ ПЕРЕД -->
+              <path id="door_fl" class="part" data-name="Дверь передняя (левая)"
+                    d="M430 150
+                       L540 150
+                       C560 150 575 170 575 190
+                       L575 275
+                       C575 292 560 305 542 305
+                       L420 305
+                       C410 305 405 298 405 288
+                       L405 190
+                       C405 168 415 150 430 150 Z"/>
+              <text x="444" y="205" class="label">Door FL</text>
 
-                <div class="panel-section">
-                    <h3><i class="fas fa-palette"></i> Изменить цвет</h3>
-                    <div class="color-controls">
-                        <div class="color-preview" id="colorPreview"></div>
-                        <input type="color" id="colorPicker" value="#3498db">
-                        <button id="btnColor" class="btn"><i class="fas fa-fill-drip"></i> Применить цвет</button>
-                        <div class="color-presets">
-                            <div class="preset" style="background-color: #e74c3c;" data-color="#e74c3c"></div>
-                            <div class="preset" style="background-color: #2ecc71;" data-color="#2ecc71"></div>
-                            <div class="preset" style="background-color: #f1c40f;" data-color="#f1c40f"></div>
-                            <div class="preset" style="background-color: #9b59b6;" data-color="#9b59b6"></div>
-                            <div class="preset" style="background-color: #34495e;" data-color="#34495e"></div>
-                        </div>
-                    </div>
-                </div>
+              <!-- ДВЕРЬ ЗАД -->
+              <path id="door_rl" class="part" data-name="Дверь задняя (левая)"
+                    d="M580 150
+                       L690 150
+                       C710 150 725 170 725 190
+                       L725 275
+                       C725 292 710 305 692 305
+                       L570 305
+                       C560 305 555 298 555 288
+                       L555 190
+                       C555 168 565 150 580 150 Z"/>
+              <text x="594" y="205" class="label">Door RL</text>
 
-                <div class="panel-section">
-                    <h3><i class="fas fa-clipboard-check"></i> Изменить статус</h3>
-                    <div class="status-controls">
-                        <select id="statusSelect" class="select-box">
-                            <option value="ok">✅ Исправен</option>
-                            <option value="repair">🔧 На ремонте</option>
-                            <option value="replace">🔄 На замену</option>
-                            <option value="inspected">🔍 Проверен</option>
-                            <option value="problem">⚠️ Есть проблема</option>
-                        </select>
-                        <button id="btnStatus" class="btn"><i class="fas fa-check-circle"></i> Установить статус</button>
-                    </div>
-                </div>
+              <!-- КАПОТ -->
+              <path id="hood" class="part" data-name="Капот"
+                    d="M320 210
+                       L410 210
+                       C430 210 445 195 448 178
+                       C453 155 435 140 415 140
+                       L340 140
+                       C315 140 300 160 302 182
+                       C304 202 310 210 320 210 Z"/>
+              <text x="332" y="175" class="label">Hood</text>
 
-                <div class="panel-section">
-                    <h3><i class="fas fa-info-circle"></i> Справка</h3>
-                    <p class="help-text">1. Кликните на любую часть машины, чтобы выделить её</p>
-                    <p class="help-text">2. Выберите цвет и нажмите "Применить цвет"</p>
-                    <p class="help-text">3. Выберите статус из списка и установите его</p>
-                </div>
-            </div>
+              <!-- КРЫЛО ПЕРЕД -->
+              <path id="fender_fl" class="part" data-name="Крыло переднее (левое)"
+                    d="M250 235
+                       L320 210
+                       C315 255 310 275 305 305
+                       L190 305
+                       C190 270 205 250 250 235 Z"/>
+              <text x="215" y="285" class="label">Fender</text>
+
+              <!-- БАМПЕР ПЕРЕД -->
+              <path id="bumper_f" class="part" data-name="Бампер передний"
+                    d="M170 305
+                       C170 275 180 250 205 240
+                       L190 305 Z"/>
+              <path id="bumper_f2" class="part" data-name="Бампер передний (нос)"
+                    d="M190 305
+                       L190 245
+                       C190 235 200 230 210 232
+                       L240 238
+                       C220 260 215 285 215 305 Z"/>
+              <text x="175" y="270" class="label">Bumper</text>
+
+              <!-- ФАРА ПЕРЕД -->
+              <path id="headlight" class="part" data-name="Фара передняя (левая)"
+                    d="M240 238
+                       L288 250
+                       C300 253 300 270 288 273
+                       L245 285
+                       C232 288 226 270 230 258
+                       C233 248 235 241 240 238 Z"/>
+              <text x="250" y="268" class="label">Light</text>
+
+              <!-- КРЫША -->
+              <path id="roof" class="part" data-name="Крыша"
+                    d="M360 150
+                       C392 125 430 120 520 120
+                       L640 120
+                       C675 120 710 135 740 160
+                       L700 160
+                       C675 145 660 140 640 140
+                       L520 140
+                       C440 140 405 145 380 160 Z"/>
+              <text x="505" y="132" class="label">Roof</text>
+
+              <!-- СТЕКЛО ПЕРЕД -->
+              <path id="glass_f" class="part" data-name="Лобовое стекло"
+                    d="M390 160
+                       C410 142 440 140 520 140
+                       L520 205
+                       L420 205
+                       C400 205 388 190 388 175
+                       C388 168 388 164 390 160 Z"/>
+              <text x="415" y="188" class="label">Glass F</text>
+
+              <!-- СТЕКЛО ЗАД -->
+              <path id="glass_r" class="part" data-name="Заднее стекло"
+                    d="M640 140
+                       C675 140 705 150 725 168
+                       C732 175 734 185 732 195
+                       C728 210 715 220 700 220
+                       L640 220 Z"/>
+              <text x="650" y="205" class="label">Glass R</text>
+
+              <!-- БАГАЖНИК -->
+              <path id="trunk" class="part" data-name="Крышка багажника"
+                    d="M725 190
+                       C730 170 745 150 770 150
+                       L820 150
+                       C845 150 865 168 868 192
+                       L875 245
+                       C878 265 865 285 846 290
+                       L780 305
+                       C770 280 728 265 725 245 Z"/>
+              <text x="780" y="220" class="label">Trunk</text>
+
+              <!-- БАМПЕР ЗАД -->
+              <path id="bumper_r" class="part" data-name="Бампер задний"
+                    d="M875 245
+                       C895 248 910 265 920 305
+                       L860 305
+                       C865 290 870 270 875 245 Z"/>
+              <text x="870" y="286" class="label">Bumper R</text>
+
+              <!-- ФОНАРЬ ЗАД -->
+              <path id="taillight" class="part" data-name="Фонарь задний (левый)"
+                    d="M820 210
+                       L860 220
+                       C870 223 870 238 860 242
+                       L824 255
+                       C810 260 805 245 808 235
+                       C812 222 815 214 820 210 Z"/>
+              <text x="823" y="240" class="label">Light R</text>
+
+              <!-- ПОРОГ -->
+              <path id="sill" class="part" data-name="Порог"
+                    d="M260 305 H820
+                       C820 320 810 330 795 330
+                       H285
+                       C270 330 260 320 260 305 Z"/>
+              <text x="500" y="325" class="label">Sill</text>
+
+              <!-- КОЛЕСО ПЕРЕД -->
+              <circle id="wheel_f" class="part" data-name="Колесо переднее" cx="310" cy="305" r="52"/>
+              <circle cx="310" cy="305" r="28" fill="rgba(0,0,0,.25)" stroke="rgba(255,255,255,.20)" stroke-width="2"/>
+              <text x="286" y="312" class="label">Wheel F</text>
+
+              <!-- КОЛЕСО ЗАД -->
+              <circle id="wheel_r" class="part" data-name="Колесо заднее" cx="770" cy="305" r="52"/>
+              <circle cx="770" cy="305" r="28" fill="rgba(0,0,0,.25)" stroke="rgba(255,255,255,.20)" stroke-width="2"/>
+              <text x="746" y="312" class="label">Wheel R</text>
+            </svg>
+          </div>
+          <div class="hint" style="padding:10px 2px 0">
+            <b>Управление:</b> 1 палец — пан (перемещение), 2 пальца — зум. <br/>
+            Клик/тап по детали — выбор. Цвет и статус сохраняются для каждой детали.
+          </div>
         </div>
 
-        <footer>
-            <p>3D модель загружена из Dropbox | Сделано с Three.js</p>
-        </footer>
+        <div class="card">
+          <div class="head">
+            <div>
+              <div class="title">Панель деталей</div>
+              <div class="sub" id="selInfo">Выбери деталь на схеме</div>
+            </div>
+          </div>
+          <div class="body split">
+            <div class="row">
+              <select id="status">
+                <option value="ok">ОК (родное)</option>
+                <option value="scratch">Царапина</option>
+                <option value="dent">Вмятина</option>
+                <option value="chip">Скол</option>
+                <option value="crack">Трещина</option>
+                <option value="stain">Пятно</option>
+                <option value="repaint">Крашено</option>
+                <option value="replace">Заменено</option>
+                <option value="polish">Полировка</option>
+              </select>
+
+              <input id="color" type="color" value="#3b82f6" title="Цвет детали" />
+              <button class="primary" id="apply">Применить</button>
+              <button id="resetPart">Сброс детали</button>
+            </div>
+
+            <div class="row" style="justify-content:space-between;align-items:center">
+              <div>
+                <div class="k">Выбранная деталь</div>
+                <div class="v" id="selName">—</div>
+                <div class="statusTag" id="selState">статус: — · цвет: —</div>
+              </div>
+              <div class="dot" id="selDot"></div>
+            </div>
+
+            <div>
+              <div class="k" style="margin-bottom:6px">Список деталей</div>
+              <div class="list" id="partsList"></div>
+            </div>
+
+            <div class="row">
+              <button id="export">Экспорт JSON</button>
+              <button id="import">Импорт JSON</button>
+              <button id="resetAll">Сбросить всё</button>
+            </div>
+
+            <textarea id="jsonBox" placeholder="Здесь появится JSON (экспорт) или вставь свой JSON (импорт)"></textarea>
+          </div>
+        </div>
+      </div>
     </div>
+  </div>
 
-    <script>
-        // ВАЖНО: Используется исправленная ссылка с raw=1
-        const MODEL_URL = 'https://www.dropbox.com/scl/fi/u5x0ih97im0nilfcgnb6o/Cobalt.glb?rlkey=5wjpbdborttmvv7u47ai60lka&st=zjzt6muk&raw=1';
+<script>
+/** ========= 1) ДАННЫЕ / СОСТОЯНИЕ ========= */
+const defaultFill = "rgba(255,255,255,.06)";
+const svg = document.getElementById("svg");
+const stage = document.getElementById("stage");
+const zoomPill = document.getElementById("zoomPill");
 
-        let scene, camera, renderer, controls, loader;
-        let model = null;
-        let selectedPart = null;
-        let originalMaterials = new Map();
+const statusEl = document.getElementById("status");
+const colorEl  = document.getElementById("color");
+const applyBtn = document.getElementById("apply");
+const resetPartBtn = document.getElementById("resetPart");
 
-        function initScene() {
-            scene = new THREE.Scene();
-            scene.background = new THREE.Color(0x0a0a14);
-            
-            const container = document.getElementById('scene');
-            camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 1000);
-            camera.position.set(8, 5, 10);
-            
-            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-            renderer.setSize(container.clientWidth, container.clientHeight);
-            renderer.shadowMap.enabled = true;
-            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-            container.appendChild(renderer.domElement);
-            
-            controls = new THREE.OrbitControls(camera, renderer.domElement);
-            controls.enableDamping = true;
-            controls.dampingFactor = 0.05;
-            controls.rotateSpeed = 0.5;
-            controls.maxDistance = 30;
-            controls.minDistance = 2;
-            
-            const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
-            scene.add(ambientLight);
-            
-            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
-            directionalLight.position.set(20, 30, 10);
-            directionalLight.castShadow = true;
-            scene.add(directionalLight);
-            
-            const backLight = new THREE.DirectionalLight(0xffffff, 0.4);
-            backLight.position.set(-10, 5, -10);
-            scene.add(backLight);
-            
-            const planeGeometry = new THREE.PlaneGeometry(30, 30);
-            const planeMaterial = new THREE.ShadowMaterial({ opacity: 0.2 });
-            const plane = new THREE.Mesh(planeGeometry, planeMaterial);
-            plane.rotation.x = -Math.PI / 2;
-            plane.position.y = -2;
-            plane.receiveShadow = true;
-            scene.add(plane);
-            
-            loadModel();
-            setupClickHandler();
-            setupUI();
-            animate();
-            
-            window.addEventListener('resize', onWindowResize);
-        }
+const selInfo = document.getElementById("selInfo");
+const selName = document.getElementById("selName");
+const selState= document.getElementById("selState");
+const selDot  = document.getElementById("selDot");
 
-        function loadModel() {
-            loader = new THREE.GLTFLoader();
-            
-            loader.load(
-                MODEL_URL,
-                function(gltf) {
-                    model = gltf.scene;
-                    
-                    model.traverse((child) => {
-                        if (child.isMesh) {
-                            child.castShadow = true;
-                            child.receiveShadow = true;
-                            originalMaterials.set(child, child.material.clone());
-                            child.userData.selectable = true;
-                            
-                            if (child.material) {
-                                child.material.metalness = 0.2;
-                                child.material.roughness = 0.6;
-                            }
-                        }
-                    });
-                    
-                    const box = new THREE.Box3().setFromObject(model);
-                    const center = box.getCenter(new THREE.Vector3());
-                    const size = box.getSize(new THREE.Vector3());
-                    
-                    model.position.x = -center.x;
-                    model.position.y = -center.y;
-                    model.position.z = -center.z;
-                    
-                    const maxDim = Math.max(size.x, size.y, size.z);
-                    camera.position.set(maxDim * 1.5, maxDim * 0.8, maxDim * 1.5);
-                    controls.target.set(0, 0, 0);
-                    controls.update();
-                    
-                    scene.add(model);
-                    document.getElementById('loading').style.display = 'none';
-                    console.log('✅ Модель успешно загружена!');
-                },
-                function(xhr) {
-                    const percent = (xhr.loaded / xhr.total * 100).toFixed(0);
-                    document.querySelector('#loading p').textContent = `Загрузка: ${percent}%`;
-                },
-                function(error) {
-                    console.error('❌ Ошибка загрузки модели:', error);
-                    document.querySelector('#loading p').textContent = 'Ошибка загрузки. Проверьте ссылку.';
-                    document.querySelector('#loading p').style.color = '#e74c3c';
-                }
-            );
-        }
+const partsList = document.getElementById("partsList");
+const exportBtn = document.getElementById("export");
+const importBtn = document.getElementById("import");
+const resetAllBtn = document.getElementById("resetAll");
+const jsonBox = document.getElementById("jsonBox");
 
-        function setupClickHandler() {
-            const raycaster = new THREE.Raycaster();
-            const mouse = new THREE.Vector2();
-            
-            function onClick(event) {
-                if (!model) return;
-                
-                const rect = renderer.domElement.getBoundingClientRect();
-                mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
-                mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
-                
-                raycaster.setFromCamera(mouse, camera);
-                const intersects = raycaster.intersectObject(model, true);
-                
-                if (selectedPart) {
-                    restoreMaterial(selectedPart);
-                }
-                
-                if (intersects.length > 0) {
-                    const clickedObject = intersects[0].object;
-                    
-                    if (clickedObject.userData.selectable) {
-                        selectedPart = clickedObject;
-                        highlightPart(selectedPart);
-                        
-                        document.getElementById('partName').textContent = 
-                            selectedPart.name || 'Деталь #' + selectedPart.id;
-                        
-                        if (selectedPart.userData.status) {
-                            updateStatusDisplay(selectedPart.userData.status);
-                        } else {
-                            document.getElementById('partStatus').textContent = 'не задан';
-                            document.getElementById('partStatus').className = 'value status-default';
-                        }
-                        
-                        const color = new THREE.Color(selectedPart.material.color);
-                        document.getElementById('colorPicker').value = '#' + color.getHexString();
-                        document.getElementById('colorPreview').style.backgroundColor = '#' + color.getHexString();
-                        
-                        console.log('Выбрана деталь:', selectedPart.name || selectedPart.id);
-                    }
-                } else {
-                    selectedPart = null;
-                    document.getElementById('partName').textContent = '— не выбрано —';
-                    document.getElementById('partStatus').textContent = 'не задан';
-                    document.getElementById('partStatus').className = 'value status-default';
-                }
-            }
-            
-            renderer.domElement.addEventListener('click', onClick);
-        }
+// все кликабельные элементы
+const parts = Array.from(svg.querySelectorAll(".part"));
+const state = {}; // { id: {name, status, color} }
+let selectedId = null;
 
-        function highlightPart(part) {
-            if (!originalMaterials.has(part)) return;
-            
-            const highlightMaterial = originalMaterials.get(part).clone();
-            highlightMaterial.emissive = new THREE.Color(0x333300);
-            highlightMaterial.emissiveIntensity = 0.3;
-            highlightMaterial.color.multiplyScalar(1.2);
-            part.material = highlightMaterial;
-        }
+// инициализация state
+for (const el of parts) {
+  const id = el.id;
+  state[id] = {
+    name: el.dataset.name || id,
+    status: "ok",
+    color: "#ffffff",
+    customFill: null // если установили цвет
+  };
+}
 
-        function restoreMaterial(part) {
-            if (originalMaterials.has(part)) {
-                part.material = originalMaterials.get(part).clone();
-            }
-        }
+/** ========= 2) ВСПОМОГАТЕЛЬНЫЕ ========= */
+const statusToAutoColor = {
+  ok:      "#22c55e",
+  scratch: "#f59e0b",
+  dent:    "#fb7185",
+  chip:    "#a855f7",
+  crack:   "#ef4444",
+  stain:   "#38bdf8",
+  repaint: "#3b82f6",
+  replace: "#eab308",
+  polish:  "#94a3b8",
+};
 
-        function setupUI() {
-            document.getElementById('btnColor').addEventListener('click', function() {
-                if (!selectedPart) {
-                    alert('Сначала выберите деталь, кликнув на неё!');
-                    return;
-                }
-                
-                const colorValue = document.getElementById('colorPicker').value;
-                const color = new THREE.Color(colorValue);
-                
-                selectedPart.material.color.copy(color);
-                
-                if (originalMaterials.has(selectedPart)) {
-                    originalMaterials.get(selectedPart).color.copy(color);
-                }
-                
-                document.getElementById('colorPreview').style.backgroundColor = colorValue;
-                console.log('Цвет изменен на:', colorValue);
-            });
-            
-            document.querySelectorAll('.preset').forEach(preset => {
-                preset.addEventListener('click', function() {
-                    const color = this.getAttribute('data-color');
-                    document.getElementById('colorPicker').value = color;
-                    document.getElementById('colorPreview').style.backgroundColor = color;
-                    
-                    if (selectedPart) {
-                        const threeColor = new THREE.Color(color);
-                        selectedPart.material.color.copy(threeColor);
-                        
-                        if (originalMaterials.has(selectedPart)) {
-                            originalMaterials.get(selectedPart).color.copy(threeColor);
-                        }
-                    }
-                });
-            });
-            
-            document.getElementById('btnStatus').addEventListener('click', function() {
-                if (!selectedPart) {
-                    alert('Сначала выберите деталь, кликнув на неё!');
-                    return;
-                }
-                
-                const statusSelect = document.getElementById('statusSelect');
-                const status = statusSelect.value;
-                const statusText = statusSelect.options[statusSelect.selectedIndex].text;
-                
-                selectedPart.userData.status = status;
-                updateStatusDisplay(status);
-                console.log('Статус изменен на:', statusText);
-            });
-            
-            document.getElementById('colorPicker').addEventListener('input', function() {
-                document.getElementById('colorPreview').style.backgroundColor = this.value;
-            });
-        }
+function setPartVisual(id){
+  const el = document.getElementById(id);
+  if (!el) return;
+  const s = state[id];
 
-        function updateStatusDisplay(status) {
-            const statusElement = document.getElementById('partStatus');
-            const statusText = document.getElementById('statusSelect').options[
-                document.getElementById('statusSelect').selectedIndex
-            ].text;
-            
-            statusElement.textContent = statusText;
-            statusElement.className = 'value';
-            switch(status) {
-                case 'ok': statusElement.classList.add('status-ok'); break;
-                case 'repair': statusElement.classList.add('status-repair'); break;
-                case 'replace': statusElement.classList.add('status-replace'); break;
-                case 'inspected': statusElement.classList.add('status-inspected'); break;
-                case 'problem': statusElement.classList.add('status-problem'); break;
-                default: statusElement.classList.add('status-default');
-            }
-        }
+  // если пользователь поставил ручной цвет — он главный,
+  // иначе берём цвет по статусу
+  const fill = s.customFill ?? (statusToAutoColor[s.status] || "#3b82f6");
+  el.style.fill = fill + "33"; // прозрачность
+  el.style.stroke = (id === selectedId) ? "rgba(59,130,246,.95)" : "rgba(255,255,255,.35)";
+  el.classList.toggle("selected", id === selectedId);
+}
 
-        function onWindowResize() {
-            const container = document.getElementById('scene');
-            camera.aspect = container.clientWidth / container.clientHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(container.clientWidth, container.clientHeight);
-        }
+function refreshAll(){
+  for (const id in state) setPartVisual(id);
+  renderList();
+  renderSelectedPanel();
+}
 
-        function animate() {
-            requestAnimationFrame(animate);
-            if (controls) controls.update();
-            if (renderer && scene && camera) renderer.render(scene, camera);
-        }
+function renderSelectedPanel(){
+  if (!selectedId){
+    selInfo.textContent = "Выбери деталь на схеме";
+    selName.textContent = "—";
+    selState.textContent = "статус: — · цвет: —";
+    selDot.style.background = "transparent";
+    return;
+  }
+  const s = state[selectedId];
+  selInfo.textContent = "Настрой выбранную деталь";
+  selName.textContent = s.name;
+  const fill = s.customFill ?? (statusToAutoColor[s.status] || "#3b82f6");
+  selState.textContent = `статус: ${s.status} · цвет: ${fill}`;
+  selDot.style.background = fill;
 
-        window.addEventListener('DOMContentLoaded', initScene);
-    </script>
+  // синхронизируем контролы
+  statusEl.value = s.status;
+  colorEl.value = (s.customFill ?? (statusToAutoColor[s.status] || "#3b82f6"));
+}
+
+function renderList(){
+  partsList.innerHTML = "";
+  for (const el of parts) {
+    const id = el.id;
+    const s = state[id];
+    const fill = s.customFill ?? (statusToAutoColor[s.status] || "#3b82f6");
+
+    const row = document.createElement("div");
+    row.className = "item" + (id === selectedId ? " active" : "");
+    row.onclick = () => selectPart(id);
+
+    const left = document.createElement("div");
+    left.style.display="grid";
+    left.style.gap="2px";
+
+    const name = document.createElement("div");
+    name.textContent = s.name;
+    name.style.fontWeight="800";
+    name.style.fontSize="13px";
+
+    const badge = document.createElement("div");
+    badge.className="badge";
+    badge.textContent = `status: ${s.status}`;
+
+    left.appendChild(name);
+    left.appendChild(badge);
+
+    const right = document.createElement("div");
+    right.style.display="flex";
+    right.style.alignItems="center";
+    right.style.gap="8px";
+
+    const dot = document.createElement("div");
+    dot.className="dot";
+    dot.style.background = fill;
+
+    right.appendChild(dot);
+
+    row.appendChild(left);
+    row.appendChild(right);
+    partsList.appendChild(row);
+  }
+}
+
+function selectPart(id){
+  selectedId = id;
+  // подсветка
+  refreshAll();
+}
+
+/** ========= 3) КЛИК ПО SVG ========= */
+for (const el of parts) {
+  el.addEventListener("pointerdown", (e) => {
+    // чтобы не мешать жестам зума/пана: если 2 пальца — это масштаб
+    if (activePointers.size >= 2) return;
+    e.stopPropagation();
+    selectPart(el.id);
+  });
+}
+
+/** ========= 4) ПРИМЕНИТЬ / СБРОС ========= */
+applyBtn.onclick = () => {
+  if (!selectedId) return;
+  const s = state[selectedId];
+  s.status = statusEl.value;
+
+  // если пользователь двигает color — считаем это ручным fill
+  s.customFill = colorEl.value;
+  refreshAll();
+};
+
+resetPartBtn.onclick = () => {
+  if (!selectedId) return;
+  state[selectedId].status = "ok";
+  state[selectedId].customFill = null;
+  refreshAll();
+};
+
+resetAllBtn.onclick = () => {
+  for (const id in state){
+    state[id].status = "ok";
+    state[id].customFill = null;
+  }
+  selectedId = null;
+  refreshAll();
+};
+
+/** ========= 5) ЭКСПОРТ / ИМПОРТ JSON ========= */
+exportBtn.onclick = () => {
+  const out = {};
+  for (const id in state){
+    out[id] = {
+      name: state[id].name,
+      status: state[id].status,
+      color: state[id].customFill ?? null
+    };
+  }
+  jsonBox.value = JSON.stringify(out, null, 2);
+};
+
+importBtn.onclick = () => {
+  try{
+    const obj = JSON.parse(jsonBox.value || "{}");
+    for (const id in obj){
+      if (!state[id]) continue;
+      if (typeof obj[id].status === "string") state[id].status = obj[id].status;
+      // color может быть null
+      state[id].customFill = (typeof obj[id].color === "string") ? obj[id].color : null;
+    }
+    refreshAll();
+  }catch(err){
+    alert("JSON невалидный. Проверь формат.");
+  }
+};
+
+/** ========= 6) PINCH ZOOM + PAN (телефон) =========
+ * Мы трансформируем <svg> через CSS transform, чтобы работало везде.
+ */
+let scale = 1;
+let panX = 0, panY = 0;
+
+const activePointers = new Map(); // pointerId -> {x,y}
+let startDist = 0;
+let startScale = 1;
+let startPanX = 0, startPanY = 0;
+
+function updateTransform(){
+  const s = `translate(${panX}px, ${panY}px) scale(${scale})`;
+  svg.style.transformOrigin = "center center";
+  svg.style.transform = s;
+  zoomPill.textContent = `Зум: ${Math.round(scale*100)}%`;
+}
+
+function dist(a,b){
+  const dx = a.x-b.x, dy = a.y-b.y;
+  return Math.hypot(dx,dy);
+}
+
+stage.addEventListener("pointerdown", (e)=>{
+  stage.setPointerCapture(e.pointerId);
+  activePointers.set(e.pointerId, {x:e.clientX, y:e.clientY});
+  if (activePointers.size === 2){
+    const pts = Array.from(activePointers.values());
+    startDist = dist(pts[0], pts[1]);
+    startScale = scale;
+    startPanX = panX;
+    startPanY = panY;
+  } else if (activePointers.size === 1){
+    startPanX = panX;
+    startPanY = panY;
+  }
+});
+
+stage.addEventListener("pointermove", (e)=>{
+  if (!activePointers.has(e.pointerId)) return;
+  activePointers.set(e.pointerId, {x:e.clientX, y:e.clientY});
+
+  if (activePointers.size === 2){
+    const pts = Array.from(activePointers.values());
+    const d = dist(pts[0], pts[1]);
+    if (startDist > 0){
+      scale = Math.min(2.8, Math.max(0.7, startScale * (d / startDist)));
+      // пан чуть-чуть по центру двух пальцев
+      const cx = (pts[0].x + pts[1].x)/2;
+      const cy = (pts[0].y + pts[1].y)/2;
+      // лёгкая корректировка (не идеальная математика, но удобно)
+      panX = startPanX + (cx - (stage.getBoundingClientRect().left + stage.clientWidth/2)) * 0.01;
+      panY = startPanY + (cy - (stage.getBoundingClientRect().top + stage.clientHeight/2)) * 0.01;
+      updateTransform();
+    }
+  } else if (activePointers.size === 1){
+    const p = activePointers.get(e.pointerId);
+    // двигаем относительно предыдущего кадра
+    const prev = stage._prev || {x:p.x, y:p.y};
+    panX += (p.x - prev.x);
+    panY += (p.y - prev.y);
+    stage._prev = {x:p.x, y:p.y};
+    updateTransform();
+  }
+});
+
+stage.addEventListener("pointerup", (e)=>{
+  activePointers.delete(e.pointerId);
+  stage._prev = null;
+  if (activePointers.size < 2) startDist = 0;
+});
+
+stage.addEventListener("pointercancel", (e)=>{
+  activePointers.delete(e.pointerId);
+  stage._prev = null;
+  if (activePointers.size < 2) startDist = 0;
+});
+
+// старт
+refreshAll();
+updateTransform();
+</script>
 </body>
 </html>
