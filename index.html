@@ -1,74 +1,100 @@
 <!DOCTYPE html>
-<html>
+<html lang="ru">
 <head>
-    <title>Интерактивная карта автомобиля</title>
+    <meta charset="UTF-8">
+    <title>Интерактивная схема повреждений автомобиля</title>
     <style>
-        body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; background: #f0f2f5; }
-        .car-container { margin-top: 50px; width: 600px; }
-        /* Стили для деталей */
-        .part { fill: #ddd; stroke: #333; stroke-width: 2; cursor: pointer; transition: 0.3s; }
-        .part:hover { fill: #bbb; }
-        /* Цвета статусов */
-        .status-ok { fill: #4CAF50 !important; }
-        .status-damage { fill: #f44336 !important; }
-        .status-warning { fill: #ffeb3b !important; }
+        body { font-family: 'Segoe UI', sans-serif; background: #1a1a2e; color: white; text-align: center; }
+        .container { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; padding: 20px; }
+        .view-box { background: #16213e; border: 1px solid #0f3460; border-radius: 10px; padding: 15px; }
+        svg { width: 100%; height: auto; max-width: 250px; }
         
-        .info { margin-top: 20px; padding: 15px; background: white; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        /* Стили деталей */
+        .part { fill: #444; stroke: #888; stroke-width: 1; cursor: pointer; transition: 0.2s; }
+        .part:hover { fill: #666; stroke: #fff; }
+        
+        /* Статусы */
+        .status-ok { fill: #28a745 !important; }      /* Зеленый - Ок */
+        .status-warn { fill: #ffc107 !important; }    /* Желтый - Царапина */
+        .status-danger { fill: #dc3545 !important; }  /* Красный - Вмятина/Замена */
+
+        .legend { margin: 20px; padding: 10px; background: #0f3460; display: inline-block; border-radius: 5px; }
+        .dot { height: 12px; width: 12px; border-radius: 50%; display: inline-block; margin-right: 5px; }
     </style>
 </head>
 <body>
 
-    <h2>Схема автомобиля (кликните на деталь)</h2>
+    <h1>Инспектор кузова автомобиля</h1>
     
-    <div class="car-container">
-        <svg viewBox="0 0 600 200" xmlns="http://www.w3.org/2000/svg">
-            <path id="bodywork" class="part" d="M50,150 L50,100 L150,80 L250,30 L450,30 L550,100 L550,150 Z" />
-            <path id="hood" class="part" d="M50,100 L150,80 L160,100 L55,115 Z" />
-            <path id="door-front" class="part" d="M170,80 L300,80 L300,150 L170,150 Z" />
-            <path id="door-back" class="part" d="M305,80 L430,80 L430,150 L305,150 Z" />
-            <path id="trunk" class="part" d="M455,35 L545,100 L545,115 L460,100 Z" />
-            <circle id="wheel-front" class="part" cx="120" cy="150" r="35" />
-            <circle id="wheel-back" class="part" cx="480" cy="150" r="35" />
-        </svg>
+    <div class="legend">
+        <span class="dot" style="background:#444"></span> Нет данных |
+        <span class="dot" style="background:#28a745"></span> Целое |
+        <span class="dot" style="background:#ffc107"></span> Мелкие дефекты |
+        <span class="dot" style="background:#dc3545"></span> Требует ремонта
     </div>
 
-    <div class="info" id="status-box">
-        Выберите деталь для изменения статуса
+    <div class="container">
+        <div class="view-box">
+            <h3>Слева</h3>
+            <svg viewBox="0 0 200 80">
+                <path id="left-fender" class="part" d="M10,50 L40,45 L45,60 L15,65 Z" /> <path id="left-door-f" class="part" d="M45,45 L95,45 L95,70 L45,70 Z" /> <path id="left-door-r" class="part" d="M100,45 L145,45 L145,70 L100,70 Z" /> <path id="left-rear-q" class="part" d="M150,45 L190,50 L185,65 L150,60 Z" /> <circle id="wheel-lf" class="part" cx="40" cy="65" r="12" />
+                <circle id="wheel-lr" class="part" cx="160" cy="65" r="12" />
+            </svg>
+        </div>
+
+        <div class="view-box">
+            <h3>Справа</h3>
+            <svg viewBox="0 0 200 80">
+                <path id="right-fender" class="part" d="M190,50 L160,45 L155,60 L185,65 Z" />
+                <path id="right-door-f" class="part" d="M155,45 L105,45 L105,70 L155,70 Z" />
+                <path id="right-door-r" class="part" d="M100,45 L55,45 L55,70 L100,70 Z" />
+                <path id="right-rear-q" class="part" d="M50,45 L10,50 L15,65 L50,60 Z" />
+                <circle id="wheel-rf" class="part" cx="160" cy="65" r="12" />
+                <circle id="wheel-rr" class="part" cx="40" cy="65" r="12" />
+            </svg>
+        </div>
+
+        <div class="view-box">
+            <h3>Спереди</h3>
+            <svg viewBox="0 0 100 80">
+                <path id="hood" class="part" d="M20,30 L80,30 L85,50 L15,50 Z" /> <path id="bumper-f" class="part" d="M10,55 L90,55 L85,70 L15,70 Z" /> <rect id="headlight-l" class="part" x="15" y="45" width="15" height="8" />
+                <rect id="headlight-r" class="part" x="70" y="45" width="15" height="8" />
+                <rect id="windshield" class="part" x="25" y="10" width="50" height="18" />
+            </svg>
+        </div>
+
+        <div class="view-box">
+            <h3>Сзади</h3>
+            <svg viewBox="0 0 100 80">
+                <path id="trunk" class="part" d="M20,35 L80,35 L85,55 L15,55 Z" /> <path id="bumper-r" class="part" d="M10,60 L90,60 L85,75 L15,75 Z" /> <rect id="taillight-l" class="part" x="10" y="45" width="15" height="10" />
+                <rect id="taillight-r" class="part" x="75" y="45" width="15" height="10" />
+            </svg>
+        </div>
+
+        <div class="view-box">
+            <h3>Сверху</h3>
+            <svg viewBox="0 0 100 150">
+                <rect id="roof" class="part" x="30" y="50" width="40" height="50" />
+                <path id="top-hood" class="part" d="M30,20 L70,20 L75,45 L25,45 Z" />
+                <path id="top-trunk" class="part" d="M30,130 L70,130 L75,105 L25,105 Z" />
+            </svg>
+        </div>
     </div>
 
     <script>
-        const parts = document.querySelectorAll('.part');
-        const info = document.getElementById('status-box');
-
-        parts.forEach(part => {
+        document.querySelectorAll('.part').forEach(part => {
             part.addEventListener('click', function() {
-                // Логика переключения статусов: Серый -> Зеленый -> Желтый -> Красный
                 if (this.classList.contains('status-ok')) {
-                    this.classList.remove('status-ok');
-                    this.classList.add('status-warning');
-                    updateInfo(this.id, "Требует внимания");
-                } else if (this.classList.contains('status-warning')) {
-                    this.classList.remove('status-warning');
-                    this.classList.add('status-damage');
-                    updateInfo(this.id, "Повреждено");
-                } else if (this.classList.contains('status-damage')) {
-                    this.classList.remove('status-damage');
-                    updateInfo(this.id, "Статус сброшен");
+                    this.classList.replace('status-ok', 'status-warn');
+                } else if (this.classList.contains('status-warn')) {
+                    this.classList.replace('status-warn', 'status-danger');
+                } else if (this.classList.contains('status-danger')) {
+                    this.classList.remove('status-danger');
                 } else {
                     this.classList.add('status-ok');
-                    updateInfo(this.id, "Исправно");
                 }
             });
         });
-
-        function updateInfo(id, status) {
-            const names = {
-                'bodywork': 'Кузов', 'hood': 'Капот', 'door-front': 'Передняя дверь',
-                'door-back': 'Задняя дверь', 'trunk': 'Багажник', 
-                'wheel-front': 'Переднее колесо', 'wheel-back': 'Заднее колесо'
-            };
-            info.innerHTML = `<strong>${names[id]}:</strong> ${status}`;
-        }
     </script>
 </body>
 </html>
