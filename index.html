@@ -2,162 +2,94 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Интерактивный кузовной осмотр</title>
+    <title>Car Inspector Pro</title>
     <style>
-        :root {
-            --bg-dark: #0f172a;
-            --panel-bg: #1e293b;
-            --accent: #38bdf8;
-            --gray: #64748b;
-            --ok: #22c55e;
-            --warn: #eab308;
-            --danger: #ef4444;
-        }
+        body { background: #0f172a; color: white; font-family: sans-serif; display: flex; flex-direction: column; align-items: center; padding: 20px; }
+        .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 30px; max-width: 900px; }
+        .card { background: #1e293b; padding: 20px; border-radius: 15px; border: 1px solid #334155; text-align: center; }
+        h3 { color: #38bdf8; margin-bottom: 15px; font-weight: 300; }
+        
+        /* Стили деталей */
+        .part { fill: #334155; stroke: #475569; stroke-width: 1.5; cursor: pointer; transition: 0.2s; }
+        .part:hover { fill: #475569; stroke: #38bdf8; }
+        .glass { fill: rgba(56, 189, 248, 0.2); pointer-events: none; }
+        
+        /* Статусы кликов */
+        .ok { fill: #22c55e !important; }
+        .warn { fill: #eab308 !important; }
+        .danger { fill: #ef4444 !important; }
 
-        body { 
-            font-family: 'Inter', system-ui, sans-serif; 
-            background: var(--bg-dark); 
-            color: white; 
-            margin: 0; padding: 20px;
-            display: flex; flex-direction: column; align-items: center;
-        }
-
-        h1 { font-weight: 300; letter-spacing: 2px; color: var(--accent); margin-bottom: 10px; }
-        .description { color: var(--gray); margin-bottom: 30px; }
-
-        .dashboard {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 20px;
-            max-width: 1200px;
-            width: 100%;
-        }
-
-        .view-card {
-            background: var(--panel-bg);
-            border-radius: 16px;
-            padding: 20px;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-            border: 1px solid rgba(255,255,255,0.05);
-            display: flex; flex-direction: column; align-items: center;
-        }
-
-        .view-card h3 { margin-top: 0; font-size: 14px; text-transform: uppercase; color: var(--gray); }
-
-        svg { width: 100%; height: auto; max-height: 180px; }
-
-        /* Детали авто */
-        .car-part {
-            fill: #334155;
-            stroke: #475569;
-            stroke-width: 1.5;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-
-        .car-part:hover { fill: #475569; stroke: var(--accent); }
-
-        /* Стекла (некликабельные для реализма) */
-        .glass { fill: #1e293b; stroke: #334155; pointer-events: none; }
-
-        /* Статусы клика */
-        .status-ok { fill: var(--ok) !important; stroke: #166534; }
-        .status-warn { fill: var(--warn) !important; stroke: #854d0e; }
-        .status-danger { fill: var(--danger) !important; stroke: #991b1b; }
-
-        .controls {
-            margin-top: 30px;
-            display: flex; gap: 20px;
-            background: var(--panel-bg);
-            padding: 15px 30px;
-            border-radius: 50px;
-        }
-
-        .legend-item { display: flex; align-items: center; gap: 8px; font-size: 14px; }
-        .dot { width: 12px; height: 12px; border-radius: 50%; }
+        .legend { margin-top: 30px; display: flex; gap: 20px; font-size: 14px; }
+        .dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; margin-right: 5px; }
     </style>
 </head>
 <body>
 
-    <h1>CAR INSPECTOR PRO</h1>
-    <p class="description">Нажимайте на детали кузова для фиксации состояния</p>
+    <h1>ИНТЕРАКТИВНЫЙ ОСМОТР АВТО</h1>
+    <p>Нажимайте на детали, чтобы изменить их статус (Ок / Царапина / Ремонт)</p>
 
-    <div class="dashboard">
-        <div class="view-card">
-            <h3>Вид слева</h3>
-            <svg viewBox="0 0 300 120">
-                <path id="l-fender" class="car-part" d="M10,80 Q10,50 50,45 L80,42 L85,85 L20,85 Z" />
-                <path id="l-door-f" class="car-part" d="M85,42 L160,40 L160,95 L85,95 Z" />
-                <path id="l-door-r" class="car-part" d="M165,40 L230,42 L230,95 L165,95 Z" />
-                <path id="l-quarter" class="car-part" d="M235,42 L280,55 Q295,60 295,85 L235,95 Z" />
-                <path class="glass" d="M90,45 L155,45 L155,70 L95,70 Z M170,45 L220,45 L220,70 L170,70 Z" />
-                <circle class="car-part" cx="55" cy="95" r="22" />
-                <circle class="car-part" cx="245" cy="95" r="22" />
+    <div class="grid">
+        <div class="card">
+            <h3>Вид сбоку</h3>
+            <svg viewBox="0 0 300 100">
+                <path class="part" id="side-fender" d="M10,70 Q10,40 50,35 L80,32 L85,75 L20,75 Z" />
+                <path class="part" id="side-door-f" d="M85,32 L160,30 L160,85 L85,85 Z" />
+                <path class="part" id="side-door-r" d="M165,30 L230,32 L230,85 L165,85 Z" />
+                <path class="part" id="side-rear" d="M235,32 L280,45 Q295,50 295,75 L235,85 Z" />
+                <path class="glass" d="M90,35 L155,35 L155,60 L95,60 Z M170,35 L220,35 L220,60 L170,60 Z" />
+                <circle class="part" cx="55" cy="85" r="15" />
+                <circle class="part" cx="245" cy="85" r="15" />
             </svg>
         </div>
 
-        <div class="view-card">
+        <div class="card">
             <h3>Вид сверху</h3>
-            <svg viewBox="0 0 120 300">
-                <path id="top-hood" class="car-part" d="M20,40 Q60,10 100,40 L105,90 L15,90 Z" />
-                <rect id="top-roof" class="car-part" x="18" y="100" width="84" height="110" rx="10" />
-                <path id="top-trunk" class="car-part" d="M20,270 Q60,295 100,270 L105,220 L15,220 Z" />
-                <rect class="glass" x="25" y="95" width="70" height="15" />
-                <rect class="glass" x="25" y="205" width="70" height="10" />
+            <svg viewBox="0 0 100 200">
+                <path class="part" id="top-hood" d="M20,30 Q50,5 80,30 L85,70 L15,70 Z" />
+                <rect class="part" id="top-roof" x="18" y="75" width="64" height="80" rx="10" />
+                <path class="part" id="top-trunk" d="M20,185 Q50,205 80,185 L85,160 L15,160 Z" />
+                <rect class="glass" x="25" y="70" width="50" height="10" />
             </svg>
         </div>
 
-        <div class="view-card">
-            <h3>Вид справа</h3>
-            <svg viewBox="0 0 300 120">
-                <path id="r-quarter" class="car-part" d="M10,85 Q10,60 25,55 L70,42 L70,95 L10,85 Z" />
-                <path id="r-door-r" class="car-part" d="M75,42 L140,40 L140,95 L75,95 Z" />
-                <path id="r-door-f" class="car-part" d="M145,40 L220,42 L220,95 L145,95 Z" />
-                <path id="r-fender" class="car-part" d="M225,42 L255,45 Q295,50 295,80 L225,85 Z" />
-                <circle class="car-part" cx="60" cy="95" r="22" />
-                <circle class="car-part" cx="250" cy="95" r="22" />
+        <div class="card">
+            <h3>Вид спереди</h3>
+            <svg viewBox="0 0 200 100">
+                <path class="part" id="front-hood" d="M40,20 L160,20 L175,60 L25,60 Z" />
+                <path class="part" id="front-bumper" d="M20,75 L180,75 L185,95 L15,95 Z" />
+                <rect class="part" x="25" y="62" width="30" height="10" rx="5" />
+                <rect class="part" x="145" y="62" width="30" height="10" rx="5" />
             </svg>
         </div>
 
-        <div class="view-card">
-            <h3>Спереди</h3>
-            <svg viewBox="0 0 200 120">
-                <path id="f-hood" class="car-part" d="M40,20 L160,20 L170,60 L30,60 Z" />
-                <path id="f-bumper" class="car-part" d="M20,80 L180,80 L185,105 L15,105 Z" />
-                <rect id="f-lamp-l" class="car-part" x="25" y="65" width="35" height="12" rx="5" />
-                <rect id="f-lamp-r" class="car-part" x="140" y="65" width="35" height="12" rx="5" />
-                <path class="glass" d="M45,22 L155,22 L150,5 L50,5 Z" />
-            </svg>
-        </div>
-
-        <div class="view-card">
-            <h3>Сзади</h3>
-            <svg viewBox="0 0 200 120">
-                <path id="b-trunk" class="car-part" d="M40,30 L160,30 L175,75 L25,75 Z" />
-                <path id="b-bumper" class="car-part" d="M20,85 L180,85 L185,110 L15,110 Z" />
-                <rect id="b-lamp-l" class="car-part" x="20" y="60" width="30" height="15" rx="3" fill="#991b1b" />
-                <rect id="b-lamp-r" class="car-part" x="150" y="60" width="30" height="15" rx="3" fill="#991b1b" />
+        <div class="card">
+            <h3>Вид сзади</h3>
+            <svg viewBox="0 0 200 100">
+                <path class="part" id="back-trunk" d="M40,30 L160,30 L175,70 L25,70 Z" />
+                <path class="part" id="back-bumper" d="M20,80 L180,80 L185,100 L15,100 Z" />
+                <rect class="part" x="20" y="65" width="25" height="12" fill="#991b1b" />
+                <rect class="part" x="155" y="65" width="25" height="12" fill="#991b1b" />
             </svg>
         </div>
     </div>
 
-    <div class="controls">
-        <div class="legend-item"><div class="dot" style="background:var(--ok)"></div> Идеально</div>
-        <div class="legend-item"><div class="dot" style="background:var(--warn)"></div> Царапина</div>
-        <div class="legend-item"><div class="dot" style="background:var(--danger)"></div> Вмятина</div>
+    <div class="legend">
+        <div><span class="dot" style="background:#22c55e"></span> Ок</div>
+        <div><span class="dot" style="background:#eab308"></span> Царапина</div>
+        <div><span class="dot" style="background:#ef4444"></span> Ремонт</div>
     </div>
 
     <script>
-        document.querySelectorAll('.car-part').forEach(part => {
-            part.addEventListener('click', function() {
-                if (this.classList.contains('status-ok')) {
-                    this.classList.replace('status-ok', 'status-warn');
-                } else if (this.classList.contains('status-warn')) {
-                    this.classList.replace('status-warn', 'status-danger');
-                } else if (this.classList.contains('status-danger')) {
-                    this.classList.remove('status-danger');
+        document.querySelectorAll('.part').forEach(el => {
+            el.addEventListener('click', function() {
+                if (this.classList.contains('ok')) {
+                    this.classList.replace('ok', 'warn');
+                } else if (this.classList.contains('warn')) {
+                    this.classList.replace('warn', 'danger');
+                } else if (this.classList.contains('danger')) {
+                    this.classList.remove('danger');
                 } else {
-                    this.classList.add('status-ok');
+                    this.classList.add('ok');
                 }
             });
         });
