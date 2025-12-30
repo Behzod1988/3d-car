@@ -3,135 +3,138 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Моя 3D Машина</title>
-    <!-- Подключаем Google Model Viewer -->
-    <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"></script>
+    <title>3D Конфигуратор Cobalt</title>
+    
+    <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.3.0/model-viewer.min.js"></script>
+
     <style>
-        /* Стили для полностраничного отображения */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        body, html {
-            height: 100%;
-            font-family: Arial, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        body { 
+            margin: 0; 
+            font-family: 'Segoe UI', sans-serif; 
+            background-color: #000; 
             color: white;
-        }
-        /* Контейнер для заголовка */
-        .header {
-            text-align: center;
-            padding: 20px;
-            background-color: rgba(0, 0, 0, 0.2);
-        }
-        /* Основной контейнер для 3D-модели */
-        .model-container {
-            width: 100%;
-            height: calc(100vh - 160px);
-            max-width: 1200px;
-            margin: 0 auto;
-            border-radius: 15px;
             overflow: hidden;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-            background: white;
         }
-        /* Стили для самого просмотрщика моделей */
+
+        /* Окно 3D модели */
         model-viewer {
+            width: 100vw;
+            height: 100vh;
+            background: radial-gradient(circle, #2c3e50 0%, #000000 100%);
+        }
+
+        /* Панель управления */
+        .ui-panel {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(15px);
+            padding: 20px;
+            border-radius: 20px;
+            border: 1px solid rgba(255,255,255,0.2);
+            z-index: 10;
+            width: 260px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.8);
+        }
+
+        h2 { margin: 0 0 10px 0; font-size: 18px; color: #00d4ff; text-transform: uppercase; }
+
+        .info { font-size: 13px; margin-bottom: 20px; color: #ccc; }
+        .info b { color: #fff; }
+
+        .status-pill {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 50px;
+            font-size: 11px;
+            font-weight: bold;
+            background: #444;
+            margin-bottom: 20px;
+        }
+
+        button {
             width: 100%;
-            height: 100%;
-            --progress-bar-color: #667eea;
-        }
-        /* Секция с инструкциями */
-        .instructions {
-            text-align: center;
             padding: 15px;
-            font-size: 14px;
-            background-color: rgba(0, 0, 0, 0.2);
-            margin-top: 10px;
-            border-radius: 8px;
-            max-width: 600px;
-            margin-left: auto;
-            margin-right: auto;
+            background: #fff;
+            color: #000;
+            border: none;
+            border-radius: 12px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+            text-transform: uppercase;
         }
-        /* Адаптивность для мобильных устройств */
-        @media (max-width: 768px) {
-            .model-container {
-                height: calc(100vh - 200px);
-                border-radius: 8px;
-            }
-            .instructions {
-                font-size: 12px;
-                padding: 10px;
-            }
+
+        button:hover {
+            background: #00d4ff;
+            transform: scale(1.02);
+        }
+
+        .hint {
+            position: absolute;
+            bottom: 20px;
+            width: 100%;
+            text-align: center;
+            color: rgba(255,255,255,0.3);
+            font-size: 11px;
+            pointer-events: none;
         }
     </style>
 </head>
 <body>
-    <!-- Шапка с заголовком -->
-    <div class="header">
-        <h1>🏎️ Моя 3D Машина</h1>
-        <p>Интерактивный просмотр модели в браузере</p>
+
+    <div class="ui-panel">
+        <h2>Cobalt 3D</h2>
+        <div class="info">Деталь: <b id="part-name">Выберите элемент</b></div>
+        <div id="status-pill" class="status-pill">РЕЖИМ ПРОСМОТРА</div>
+        <button onclick="changePartColor()">Сменить цвет</button>
     </div>
 
-    <!-- Основной контейнер для 3D-модели -->
-    <div class="model-container">
-        <!-- Тег Model Viewer - именно здесь отображается ваша модель -->
-        <model-viewer
-            src="car.glb"
-            alt="3D модель автомобиля"
-            camera-controls
-            auto-rotate
-            shadow-intensity="1.5"
-            exposure="1.2"
-            ar
-            camera-orbit="0deg 75deg 8m"
-            environment-image="neutral"
-            interaction-prompt="none"
-            loading="eager"
-        >
-            <!-- Индикатор загрузки -->
-            <div slot="progress-bar">
-                <div class="progress-bar" style="width: 100%; height: 4px; background-color: var(--progress-bar-color);"></div>
-            </div>
-            
-            <!-- Сообщение, если модель не загружается -->
-            <div slot="poster">
-                <div style="display: flex; justify-content: center; align-items: center; height: 100%; color: #333;">
-                    <p>Загружаем 3D-модель...</p>
-                </div>
-            </div>
-            
-            <!-- Кнопка для AR режима -->
-            <button slot="ar-button" style="background-color: #667eea; color: white; border: none; padding: 10px 20px; border-radius: 20px; margin: 10px; cursor: pointer;">
-                👁️ Посмотреть в AR
-            </button>
-        </model-viewer>
-    </div>
+    <div class="hint">Вращение 360° • Клик по деталям • Масштабирование</div>
 
-    <!-- Инструкция по управлению -->
-    <div class="instructions">
-        <p><strong>💡 Как управлять:</strong> Зажмите левую кнопку мыши для вращения • Колесико мыши для масштабирования • Автоматическое вращение включено</p>
-        <p>📱 На мобильных устройствах: используйте касания для вращения и жесты "щипок" для масштабирования</p>
-    </div>
+    <model-viewer 
+        id="cobalt" 
+        src="https://www.dropbox.com/scl/fi/u5x0ih97im0nilfcgnb6o/Cobalt.glb?rlkey=5wjpbdborttmvv7u47ai60lka&st=zjzt6muk&raw=1" 
+        camera-controls 
+        auto-rotate 
+        shadow-intensity="1.5" 
+        exposure="1"
+        environment-image="neutral"
+        ar-modes="webxr scene-viewer quick-look"
+        ar>
+    </model-viewer>
 
-    <!-- Небольшой скрипт для улучшения UX -->
     <script>
-        // Ждем загрузки DOM
-        document.addEventListener('DOMContentLoaded', function() {
-            const modelViewer = document.querySelector('model-viewer');
-            
-            // Проверяем, загрузилась ли модель
-            modelViewer.addEventListener('load', () => {
-                console.log('✅ 3D модель успешно загружена!');
-            });
-            
-            // Обработка ошибок загрузки
-            modelViewer.addEventListener('error', (event) => {
-                console.error('❌ Ошибка загрузки модели:', event.detail);
-                alert('Не удалось загрузить 3D модель. Проверьте:\n1. Файл car.glb в той же папке\n2. Правильность имени файла\n3. Размер файла (не более 100 МБ)');
-            });
+        const modelViewer = document.querySelector("#cobalt");
+        const partNameDisplay = document.querySelector("#part-name");
+        const statusPill = document.querySelector("#status-pill");
+        let activeMaterial = null;
+
+        // Клик по машине
+        modelViewer.addEventListener('click', (event) => {
+            const material = modelViewer.materialFromPoint(event.clientX, event.clientY);
+            if (material) {
+                activeMaterial = material;
+                partNameDisplay.innerText = material.name || "Корпус";
+                statusPill.innerText = "ДЕТАЛЬ ВЫБРАНА";
+                statusPill.style.background = "#00d4ff";
+                statusPill.style.color = "#000";
+            }
         });
+
+        // Смена цвета
+        function changePartColor() {
+            if (activeMaterial) {
+                const color = [Math.random(), Math.random(), Math.random(), 1];
+                activeMaterial.pbrMetallicRoughness.setBaseColorFactor(color);
+                statusPill.innerText = "ЦВЕТ ОБНОВЛЕН";
+                statusPill.style.background = "#2ecc71";
+                statusPill.style.color = "#fff";
+            } else {
+                alert("Сначала нажмите на деталь машины!");
+            }
+        }
     </script>
 </body>
 </html>
