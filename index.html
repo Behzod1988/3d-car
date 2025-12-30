@@ -1,334 +1,465 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
-  <title>3D Осмотр авто</title>
-  <style>
-    html,body{margin:0;height:100%;background:#0b0f14;color:#fff;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial}
-    #wrap{position:fixed;inset:0}
-    #c{width:100%;height:100%;display:block;touch-action:none}
-    #top{
-      position:fixed;left:0;right:0;top:0;
-      padding:10px 12px;
-      display:flex;align-items:center;justify-content:space-between;gap:10px;
-      background:linear-gradient(to bottom, rgba(11,15,20,.92), rgba(11,15,20,.15));
-      pointer-events:none;
-    }
-    #top > *{pointer-events:auto}
-    .title{font-weight:700}
-    .hint{opacity:.75;font-size:12px;margin-top:2px}
-    button, select, input{
-      font:inherit;color:inherit;background:rgba(255,255,255,.06);
-      border:1px solid rgba(255,255,255,.14);border-radius:12px;padding:10px 12px;
-    }
-    button{cursor:pointer}
-    #panel{
-      position:fixed;left:0;right:0;bottom:0;
-      background:rgba(18,24,34,.92);backdrop-filter:blur(10px);
-      border-top:1px solid rgba(255,255,255,.10);
-      padding:12px;display:grid;gap:10px;
-    }
-    .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-    .chip{padding:7px 10px;border-radius:999px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.06);font-size:13px}
-    .muted{opacity:.75;font-size:12px}
-    #loading{
-      position:fixed;inset:0;display:grid;place-items:center;
-      background:rgba(11,15,20,.85);backdrop-filter: blur(6px);
-    }
-    .box{width:min(380px, 92vw);border:1px solid rgba(255,255,255,.12);border-radius:16px;padding:14px;background:rgba(255,255,255,.06)}
-    .bar{height:10px;border-radius:999px;background:rgba(255,255,255,.12);overflow:hidden;margin-top:10px}
-    .bar > div{height:100%;width:0%;background:rgba(255,255,255,.85)}
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Машина - Интерактивный просмотр</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #f0f0f0; min-height: 100vh; overflow-x: hidden;
+        }
+        .container { max-width: 100%; padding: 20px; }
+        header {
+            text-align: center; margin-bottom: 30px; padding: 20px;
+            background: rgba(255,255,255,0.05); border-radius: 15px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        h1 { font-size: 2.5rem; margin-bottom: 10px; color: #fff; text-shadow: 0 2px 10px rgba(0,0,0,0.3); }
+        h1 i { color: #3498db; margin-right: 15px; }
+        .subtitle { font-size: 1.1rem; color: #aaa; margin-bottom: 0; }
+        .main-content { display: flex; flex-wrap: wrap; gap: 30px; margin-bottom: 30px; }
+        .scene-container {
+            flex: 3; min-width: 300px; background: rgba(0,0,0,0.3);
+            border-radius: 15px; padding: 15px; position: relative;
+            min-height: 600px; border: 1px solid rgba(255,255,255,0.1);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+        }
+        #scene { width: 100%; height: 100%; min-height: 550px; border-radius: 10px; overflow: hidden; }
+        #loading {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8); display: flex; flex-direction: column;
+            justify-content: center; align-items: center; z-index: 100; border-radius: 10px;
+        }
+        .spinner {
+            width: 60px; height: 60px; border: 5px solid rgba(255,255,255,0.1);
+            border-top: 5px solid #3498db; border-radius: 50%;
+            animation: spin 1s linear infinite; margin-bottom: 20px;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .hint {
+            margin-top: 15px; padding: 10px; background: rgba(52,152,219,0.2);
+            border-radius: 8px; font-size: 0.9rem; text-align: center; color: #a0d2f7;
+        }
+        .hint i { margin: 0 5px; }
+        .control-panel {
+            flex: 1; min-width: 300px; background: rgba(30,30,46,0.8);
+            border-radius: 15px; padding: 25px; border: 1px solid rgba(255,255,255,0.1);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+        }
+        .panel-section {
+            margin-bottom: 30px; padding-bottom: 25px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .panel-section:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+        .panel-section h3 {
+            font-size: 1.3rem; margin-bottom: 20px; color: #fff;
+            display: flex; align-items: center;
+        }
+        .panel-section h3 i { margin-right: 10px; color: #3498db; }
+        .part-info { background: rgba(255,255,255,0.05); padding: 15px; border-radius: 10px; }
+        .info-item { display: flex; justify-content: space-between; margin-bottom: 10px; }
+        .info-item:last-child { margin-bottom: 0; }
+        .label { font-weight: 600; color: #aaa; }
+        .value { color: #fff; font-weight: 500; }
+        .status-default { color: #95a5a6; } .status-ok { color: #2ecc71; }
+        .status-repair { color: #f39c12; } .status-replace { color: #9b59b6; }
+        .status-inspected { color: #3498db; } .status-problem { color: #e74c3c; }
+        .color-controls { display: flex; flex-direction: column; gap: 15px; }
+        .color-preview {
+            width: 100%; height: 60px; border-radius: 10px;
+            background-color: #3498db; border: 3px solid rgba(255,255,255,0.2);
+        }
+        .color-presets { display: flex; gap: 10px; margin-top: 10px; }
+        .preset {
+            width: 40px; height: 40px; border-radius: 8px; cursor: pointer;
+            transition: transform 0.2s, border 0.2s; border: 2px solid transparent;
+        }
+        .preset:hover { transform: scale(1.1); border: 2px solid white; }
+        input[type="color"] {
+            width: 100%; height: 45px; border: none; border-radius: 8px;
+            cursor: pointer; background: transparent;
+        }
+        .select-box, .btn {
+            width: 100%; padding: 14px; border-radius: 10px;
+            border: none; font-size: 1rem; margin-bottom: 12px;
+        }
+        .select-box {
+            background: rgba(255,255,255,0.1); color: white; cursor: pointer;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        .btn {
+            background: linear-gradient(to right, #3498db, #2ecc71);
+            color: white; font-weight: 600; cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            display: flex; align-items: center; justify-content: center; gap: 10px;
+        }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
+        .help-text {
+            margin-bottom: 10px; color: #bbb; font-size: 0.95rem; line-height: 1.5;
+        }
+        footer {
+            text-align: center; padding: 20px; color: #777;
+            font-size: 0.9rem; border-top: 1px solid rgba(255,255,255,0.1);
+        }
+        @media (max-width: 1100px) {
+            .main-content { flex-direction: column; }
+            .scene-container, .control-panel { min-width: 100%; }
+            h1 { font-size: 2rem; }
+        }
+    </style>
 </head>
 <body>
-  <div id="wrap">
-    <canvas id="c"></canvas>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-car"></i> Интерактивная 3D Машина</h1>
+            <p class="subtitle">Вращайте, выделяйте детали и изменяйте цвета</p>
+        </header>
 
-    <div id="top">
-      <div>
-        <div class="title">3D Осмотр</div>
-        <div class="hint">Крути 1 пальцем • Тап по детали • 2 пальца = зум</div>
-      </div>
-      <button id="resetBtn">Сброс</button>
-    </div>
+        <div class="main-content">
+            <div class="scene-container">
+                <div id="loading">
+                    <div class="spinner"></div>
+                    <p>Загрузка 3D модели...</p>
+                </div>
+                <div id="scene"></div>
+                <div class="hint">
+                    <i class="fas fa-mouse-pointer"></i> ЛКМ — вращать | Колесико — приближать | <i class="fas fa-hand-pointer"></i> Клик — выбрать деталь
+                </div>
+            </div>
 
-    <div id="panel">
-      <div class="row">
-        <div class="chip">Деталь: <b id="partName">—</b></div>
-        <div class="chip">Статус: <b id="partStatus">—</b></div>
-      </div>
+            <div class="control-panel">
+                <div class="panel-section">
+                    <h3><i class="fas fa-crosshairs"></i> Выделенная деталь</h3>
+                    <div class="part-info">
+                        <div class="info-item">
+                            <span class="label">Название:</span>
+                            <span id="partName" class="value">— не выбрано —</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="label">Статус:</span>
+                            <span id="partStatus" class="value status-default">не задан</span>
+                        </div>
+                    </div>
+                </div>
 
-      <div class="row">
-        <select id="statusSel">
-          <option value="">— статус —</option>
-          <option value="stock">Родное</option>
-          <option value="painted">Покрашено</option>
-          <option value="scratch">Царапина</option>
-          <option value="dent">Вмятина</option>
-          <option value="chip">Скол</option>
-          <option value="crack">Трещина</option>
-          <option value="stain">Пятно</option>
-          <option value="polished">Полировано</option>
-        </select>
+                <div class="panel-section">
+                    <h3><i class="fas fa-palette"></i> Изменить цвет</h3>
+                    <div class="color-controls">
+                        <div class="color-preview" id="colorPreview"></div>
+                        <input type="color" id="colorPicker" value="#3498db">
+                        <button id="btnColor" class="btn"><i class="fas fa-fill-drip"></i> Применить цвет</button>
+                        <div class="color-presets">
+                            <div class="preset" style="background-color: #e74c3c;" data-color="#e74c3c"></div>
+                            <div class="preset" style="background-color: #2ecc71;" data-color="#2ecc71"></div>
+                            <div class="preset" style="background-color: #f1c40f;" data-color="#f1c40f"></div>
+                            <div class="preset" style="background-color: #9b59b6;" data-color="#9b59b6"></div>
+                            <div class="preset" style="background-color: #34495e;" data-color="#34495e"></div>
+                        </div>
+                    </div>
+                </div>
 
-        <input id="colorPick" type="color" value="#1b6cf0" />
-        <button id="applyBtn">Применить</button>
-        <button id="exportBtn">JSON</button>
-      </div>
+                <div class="panel-section">
+                    <h3><i class="fas fa-clipboard-check"></i> Изменить статус</h3>
+                    <div class="status-controls">
+                        <select id="statusSelect" class="select-box">
+                            <option value="ok">✅ Исправен</option>
+                            <option value="repair">🔧 На ремонте</option>
+                            <option value="replace">🔄 На замену</option>
+                            <option value="inspected">🔍 Проверен</option>
+                            <option value="problem">⚠️ Есть проблема</option>
+                        </select>
+                        <button id="btnStatus" class="btn"><i class="fas fa-check-circle"></i> Установить статус</button>
+                    </div>
+                </div>
 
-      <div class="muted">
-        Лучше, чтобы в Blender у каждой детали был уникальный name (например: door_fl, hood, bumper_f).
-      </div>
-    </div>
-
-    <div id="loading">
-      <div class="box">
-        <div style="font-weight:700">Загрузка модели… <span id="pct">0%</span></div>
-        <div class="bar"><div id="bar"></div></div>
-        <div class="muted" style="margin-top:10px">
-          Если не грузит — смотри консоль (F12). Dropbox иногда блокирует CORS, тогда лучше перенести GLB в Supabase Storage/R2.
+                <div class="panel-section">
+                    <h3><i class="fas fa-info-circle"></i> Справка</h3>
+                    <p class="help-text">1. Кликните на любую часть машины, чтобы выделить её</p>
+                    <p class="help-text">2. Выберите цвет и нажмите "Применить цвет"</p>
+                    <p class="help-text">3. Выберите статус из списка и установите его</p>
+                </div>
+            </div>
         </div>
-      </div>
+
+        <footer>
+            <p>3D модель загружена из Dropbox | Сделано с Three.js</p>
+        </footer>
     </div>
-  </div>
 
-  <script type="module">
-    import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.161.0/build/three.module.js";
-    import { OrbitControls } from "https://cdn.jsdelivr.net/npm/three@0.161.0/examples/jsm/controls/OrbitControls.js";
-    import { GLTFLoader } from "https://cdn.jsdelivr.net/npm/three@0.161.0/examples/jsm/loaders/GLTFLoader.js";
+    <script>
+        // ВАЖНО: Используется исправленная ссылка с raw=1
+        const MODEL_URL = 'https://www.dropbox.com/scl/fi/u5x0ih97im0nilfcgnb6o/Cobalt.glb?rlkey=5wjpbdborttmvv7u47ai60lka&st=zjzt6muk&raw=1';
 
-    // ✅ ТВОЙ DROPBOX GLB (прямая загрузка через raw=1)
-    const MODEL_URL =
-      "https://www.dropbox.com/scl/fi/u5x0ih97im0nilfcgnb6o/Cobalt.glb?rlkey=5wjpbdborttmvv7u47ai60lka&raw=1";
+        let scene, camera, renderer, controls, loader;
+        let model = null;
+        let selectedPart = null;
+        let originalMaterials = new Map();
 
-    const STATUS_COLOR = {
-      stock:"#2ecc71", painted:"#f1c40f", scratch:"#e67e22", dent:"#e74c3c",
-      chip:"#9b59b6", crack:"#3498db", stain:"#95a5a6", polished:"#1abc9c"
-    };
+        function initScene() {
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x0a0a14);
+            
+            const container = document.getElementById('scene');
+            camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 1000);
+            camera.position.set(8, 5, 10);
+            
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(container.clientWidth, container.clientHeight);
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            container.appendChild(renderer.domElement);
+            
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+            controls.rotateSpeed = 0.5;
+            controls.maxDistance = 30;
+            controls.minDistance = 2;
+            
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+            scene.add(ambientLight);
+            
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            directionalLight.position.set(20, 30, 10);
+            directionalLight.castShadow = true;
+            scene.add(directionalLight);
+            
+            const backLight = new THREE.DirectionalLight(0xffffff, 0.4);
+            backLight.position.set(-10, 5, -10);
+            scene.add(backLight);
+            
+            const planeGeometry = new THREE.PlaneGeometry(30, 30);
+            const planeMaterial = new THREE.ShadowMaterial({ opacity: 0.2 });
+            const plane = new THREE.Mesh(planeGeometry, planeMaterial);
+            plane.rotation.x = -Math.PI / 2;
+            plane.position.y = -2;
+            plane.receiveShadow = true;
+            scene.add(plane);
+            
+            loadModel();
+            setupClickHandler();
+            setupUI();
+            animate();
+            
+            window.addEventListener('resize', onWindowResize);
+        }
 
-    const storeKey = "car_inspect_state_v2";
-    const state = JSON.parse(localStorage.getItem(storeKey) || "{}");
-    const saveState = () => localStorage.setItem(storeKey, JSON.stringify(state));
+        function loadModel() {
+            loader = new THREE.GLTFLoader();
+            
+            loader.load(
+                MODEL_URL,
+                function(gltf) {
+                    model = gltf.scene;
+                    
+                    model.traverse((child) => {
+                        if (child.isMesh) {
+                            child.castShadow = true;
+                            child.receiveShadow = true;
+                            originalMaterials.set(child, child.material.clone());
+                            child.userData.selectable = true;
+                            
+                            if (child.material) {
+                                child.material.metalness = 0.2;
+                                child.material.roughness = 0.6;
+                            }
+                        }
+                    });
+                    
+                    const box = new THREE.Box3().setFromObject(model);
+                    const center = box.getCenter(new THREE.Vector3());
+                    const size = box.getSize(new THREE.Vector3());
+                    
+                    model.position.x = -center.x;
+                    model.position.y = -center.y;
+                    model.position.z = -center.z;
+                    
+                    const maxDim = Math.max(size.x, size.y, size.z);
+                    camera.position.set(maxDim * 1.5, maxDim * 0.8, maxDim * 1.5);
+                    controls.target.set(0, 0, 0);
+                    controls.update();
+                    
+                    scene.add(model);
+                    document.getElementById('loading').style.display = 'none';
+                    console.log('✅ Модель успешно загружена!');
+                },
+                function(xhr) {
+                    const percent = (xhr.loaded / xhr.total * 100).toFixed(0);
+                    document.querySelector('#loading p').textContent = `Загрузка: ${percent}%`;
+                },
+                function(error) {
+                    console.error('❌ Ошибка загрузки модели:', error);
+                    document.querySelector('#loading p').textContent = 'Ошибка загрузки. Проверьте ссылку.';
+                    document.querySelector('#loading p').style.color = '#e74c3c';
+                }
+            );
+        }
 
-    const canvas = document.getElementById("c");
-    const renderer = new THREE.WebGLRenderer({ canvas, antialias:true, alpha:false });
-    renderer.setPixelRatio(Math.min(2, devicePixelRatio));
-    renderer.setSize(innerWidth, innerHeight);
-    renderer.outputColorSpace = THREE.SRGBColorSpace;
-    renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.05;
+        function setupClickHandler() {
+            const raycaster = new THREE.Raycaster();
+            const mouse = new THREE.Vector2();
+            
+            function onClick(event) {
+                if (!model) return;
+                
+                const rect = renderer.domElement.getBoundingClientRect();
+                mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+                mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+                
+                raycaster.setFromCamera(mouse, camera);
+                const intersects = raycaster.intersectObject(model, true);
+                
+                if (selectedPart) {
+                    restoreMaterial(selectedPart);
+                }
+                
+                if (intersects.length > 0) {
+                    const clickedObject = intersects[0].object;
+                    
+                    if (clickedObject.userData.selectable) {
+                        selectedPart = clickedObject;
+                        highlightPart(selectedPart);
+                        
+                        document.getElementById('partName').textContent = 
+                            selectedPart.name || 'Деталь #' + selectedPart.id;
+                        
+                        if (selectedPart.userData.status) {
+                            updateStatusDisplay(selectedPart.userData.status);
+                        } else {
+                            document.getElementById('partStatus').textContent = 'не задан';
+                            document.getElementById('partStatus').className = 'value status-default';
+                        }
+                        
+                        const color = new THREE.Color(selectedPart.material.color);
+                        document.getElementById('colorPicker').value = '#' + color.getHexString();
+                        document.getElementById('colorPreview').style.backgroundColor = '#' + color.getHexString();
+                        
+                        console.log('Выбрана деталь:', selectedPart.name || selectedPart.id);
+                    }
+                } else {
+                    selectedPart = null;
+                    document.getElementById('partName').textContent = '— не выбрано —';
+                    document.getElementById('partStatus').textContent = 'не задан';
+                    document.getElementById('partStatus').className = 'value status-default';
+                }
+            }
+            
+            renderer.domElement.addEventListener('click', onClick);
+        }
 
-    const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x0b0f14);
+        function highlightPart(part) {
+            if (!originalMaterials.has(part)) return;
+            
+            const highlightMaterial = originalMaterials.get(part).clone();
+            highlightMaterial.emissive = new THREE.Color(0x333300);
+            highlightMaterial.emissiveIntensity = 0.3;
+            highlightMaterial.color.multiplyScalar(1.2);
+            part.material = highlightMaterial;
+        }
 
-    const camera = new THREE.PerspectiveCamera(45, innerWidth/innerHeight, 0.1, 2000);
-    camera.position.set(2.6, 1.6, 3.2);
+        function restoreMaterial(part) {
+            if (originalMaterials.has(part)) {
+                part.material = originalMaterials.get(part).clone();
+            }
+        }
 
-    const controls = new OrbitControls(camera, canvas);
-    controls.enableDamping = true;
-    controls.dampingFactor = 0.06;
-    controls.rotateSpeed = 0.8;
-    controls.zoomSpeed = 0.8;
-    controls.enablePan = false;
+        function setupUI() {
+            document.getElementById('btnColor').addEventListener('click', function() {
+                if (!selectedPart) {
+                    alert('Сначала выберите деталь, кликнув на неё!');
+                    return;
+                }
+                
+                const colorValue = document.getElementById('colorPicker').value;
+                const color = new THREE.Color(colorValue);
+                
+                selectedPart.material.color.copy(color);
+                
+                if (originalMaterials.has(selectedPart)) {
+                    originalMaterials.get(selectedPart).color.copy(color);
+                }
+                
+                document.getElementById('colorPreview').style.backgroundColor = colorValue;
+                console.log('Цвет изменен на:', colorValue);
+            });
+            
+            document.querySelectorAll('.preset').forEach(preset => {
+                preset.addEventListener('click', function() {
+                    const color = this.getAttribute('data-color');
+                    document.getElementById('colorPicker').value = color;
+                    document.getElementById('colorPreview').style.backgroundColor = color;
+                    
+                    if (selectedPart) {
+                        const threeColor = new THREE.Color(color);
+                        selectedPart.material.color.copy(threeColor);
+                        
+                        if (originalMaterials.has(selectedPart)) {
+                            originalMaterials.get(selectedPart).color.copy(threeColor);
+                        }
+                    }
+                });
+            });
+            
+            document.getElementById('btnStatus').addEventListener('click', function() {
+                if (!selectedPart) {
+                    alert('Сначала выберите деталь, кликнув на неё!');
+                    return;
+                }
+                
+                const statusSelect = document.getElementById('statusSelect');
+                const status = statusSelect.value;
+                const statusText = statusSelect.options[statusSelect.selectedIndex].text;
+                
+                selectedPart.userData.status = status;
+                updateStatusDisplay(status);
+                console.log('Статус изменен на:', statusText);
+            });
+            
+            document.getElementById('colorPicker').addEventListener('input', function() {
+                document.getElementById('colorPreview').style.backgroundColor = this.value;
+            });
+        }
 
-    scene.add(new THREE.HemisphereLight(0xffffff, 0x223344, 1.0));
-    const keyLight = new THREE.DirectionalLight(0xffffff, 1.2);
-    keyLight.position.set(5, 7, 4);
-    scene.add(keyLight);
-    const fillLight = new THREE.DirectionalLight(0xffffff, 0.35);
-    fillLight.position.set(-6, 2, -4);
-    scene.add(fillLight);
+        function updateStatusDisplay(status) {
+            const statusElement = document.getElementById('partStatus');
+            const statusText = document.getElementById('statusSelect').options[
+                document.getElementById('statusSelect').selectedIndex
+            ].text;
+            
+            statusElement.textContent = statusText;
+            statusElement.className = 'value';
+            switch(status) {
+                case 'ok': statusElement.classList.add('status-ok'); break;
+                case 'repair': statusElement.classList.add('status-repair'); break;
+                case 'replace': statusElement.classList.add('status-replace'); break;
+                case 'inspected': statusElement.classList.add('status-inspected'); break;
+                case 'problem': statusElement.classList.add('status-problem'); break;
+                default: statusElement.classList.add('status-default');
+            }
+        }
 
-    const raycaster = new THREE.Raycaster();
-    const pointer = new THREE.Vector2();
+        function onWindowResize() {
+            const container = document.getElementById('scene');
+            camera.aspect = container.clientWidth / container.clientHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(container.clientWidth, container.clientHeight);
+        }
 
-    const partNameEl = document.getElementById("partName");
-    const partStatusEl = document.getElementById("partStatus");
-    const statusSel = document.getElementById("statusSel");
-    const colorPick = document.getElementById("colorPick");
+        function animate() {
+            requestAnimationFrame(animate);
+            if (controls) controls.update();
+            if (renderer && scene && camera) renderer.render(scene, camera);
+        }
 
-    const loadingEl = document.getElementById("loading");
-    const pctEl = document.getElementById("pct");
-    const barEl = document.getElementById("bar");
-
-    let modelRoot = null;
-    let selectedMesh = null;
-    let helper = null;
-
-    function ensureUniqueMaterial(mesh){
-      if (!mesh.material) return;
-      if (Array.isArray(mesh.material)) mesh.material = mesh.material.map(m => m.clone());
-      else mesh.material = mesh.material.clone();
-    }
-    function setMeshColor(mesh, hex){
-      ensureUniqueMaterial(mesh);
-      const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
-      mats.forEach(m => {
-        if (m?.color) m.color.set(hex);
-        m.needsUpdate = true;
-      });
-    }
-
-    function applySavedToAll(){
-      if (!modelRoot) return;
-      modelRoot.traverse(n=>{
-        if (!n.isMesh) return;
-        const key = n.name || n.uuid;
-        const s = state[key];
-        if (s?.color) setMeshColor(n, s.color);
-      });
-    }
-
-    function allMeshes(){
-      const arr = [];
-      modelRoot?.traverse(n => { if (n.isMesh) arr.push(n); });
-      return arr;
-    }
-
-    function pick(clientX, clientY){
-      const rect = canvas.getBoundingClientRect();
-      pointer.x = ((clientX - rect.left)/rect.width)*2 - 1;
-      pointer.y = -(((clientY - rect.top)/rect.height)*2 - 1);
-      raycaster.setFromCamera(pointer, camera);
-      return raycaster.intersectObjects(allMeshes(), true)[0]?.object || null;
-    }
-
-    function setHelper(mesh){
-      if (helper) { scene.remove(helper); helper.geometry?.dispose?.(); helper = null; }
-      if (!mesh) return;
-      helper = new THREE.BoxHelper(mesh, 0xffffff);
-      helper.material.transparent = true;
-      helper.material.opacity = 0.75;
-      scene.add(helper);
-    }
-
-    function selectMesh(mesh){
-      selectedMesh = mesh;
-
-      if (!mesh) {
-        partNameEl.textContent = "—";
-        partStatusEl.textContent = "—";
-        statusSel.value = "";
-        setHelper(null);
-        return;
-      }
-
-      const key = mesh.name || mesh.uuid;
-      partNameEl.textContent = mesh.name || "(без имени)";
-      partStatusEl.textContent = state[key]?.status || "—";
-      statusSel.value = state[key]?.status || "";
-      colorPick.value = state[key]?.color || "#1b6cf0";
-      setHelper(mesh);
-    }
-
-    // Тап без “срабатывания” при вращении:
-    let downX=0, downY=0, downT=0, moved=false;
-    canvas.addEventListener("pointerdown", (e)=>{
-      downX = e.clientX; downY = e.clientY; downT = performance.now();
-      moved = false;
-    }, {passive:true});
-    canvas.addEventListener("pointermove", (e)=>{
-      if (Math.hypot(e.clientX-downX, e.clientY-downY) > 8) moved = true;
-    }, {passive:true});
-    canvas.addEventListener("pointerup", (e)=>{
-      const dt = performance.now() - downT;
-      if (moved || dt > 350) return; // это было вращение, не тап
-      const obj = pick(e.clientX, e.clientY);
-      if (obj) selectMesh(obj);
-    }, {passive:true});
-
-    statusSel.addEventListener("change", ()=>{
-      const st = statusSel.value;
-      if (st && STATUS_COLOR[st]) colorPick.value = STATUS_COLOR[st];
-    });
-
-    document.getElementById("applyBtn").addEventListener("click", ()=>{
-      if (!selectedMesh) return;
-      const key = selectedMesh.name || selectedMesh.uuid;
-
-      const status = statusSel.value;
-      const color = colorPick.value;
-
-      state[key] = { status, color, updatedAt: Date.now() };
-      setMeshColor(selectedMesh, color);
-      partStatusEl.textContent = status || "—";
-      saveState();
-    });
-
-    document.getElementById("exportBtn").addEventListener("click", ()=>{
-      const blob = new Blob([JSON.stringify(state, null, 2)], {type:"application/json"});
-      const a = document.createElement("a");
-      a.href = URL.createObjectURL(blob);
-      a.download = "inspection.json";
-      a.click();
-      URL.revokeObjectURL(a.href);
-    });
-
-    document.getElementById("resetBtn").addEventListener("click", ()=>{
-      for (const k of Object.keys(state)) delete state[k];
-      saveState();
-      location.reload();
-    });
-
-    function frameObject(root){
-      const box = new THREE.Box3().setFromObject(root);
-      const center = box.getCenter(new THREE.Vector3());
-      const size = box.getSize(new THREE.Vector3());
-
-      root.position.sub(center);
-
-      const maxDim = Math.max(size.x, size.y, size.z);
-      const fov = camera.fov * (Math.PI / 180);
-      let dist = (maxDim / 2) / Math.tan(fov / 2);
-      dist *= 1.35;
-
-      camera.position.set(dist * 0.85, dist * 0.45, dist);
-      camera.near = dist / 100;
-      camera.far  = dist * 50;
-      camera.updateProjectionMatrix();
-
-      controls.target.set(0, 0, 0);
-      controls.minDistance = dist * 0.35;
-      controls.maxDistance = dist * 2.2;
-      controls.update();
-    }
-
-    const loader = new GLTFLoader();
-    loader.load(
-      MODEL_URL,
-      (gltf)=>{
-        modelRoot = gltf.scene;
-        scene.add(modelRoot);
-        frameObject(modelRoot);
-        applySavedToAll();
-        loadingEl.style.display = "none";
-      },
-      (xhr)=>{
-        if (!xhr.total) return;
-        const p = Math.round((xhr.loaded / xhr.total) * 100);
-        pctEl.textContent = p + "%";
-        barEl.style.width = p + "%";
-      },
-      (err)=>{
-        console.error(err);
-        alert("GLB не загрузился. Если в консоли ошибка CORS от Dropbox — перенеси GLB в Supabase Storage/R2 (там точно работает).");
-      }
-    );
-
-    addEventListener("resize", ()=>{
-      camera.aspect = innerWidth/innerHeight;
-      camera.updateProjectionMatrix();
-      renderer.setSize(innerWidth, innerHeight);
-    });
-
-    function animate(){
-      requestAnimationFrame(animate);
-      controls.update();
-      if (helper) helper.update();
-      renderer.render(scene, camera);
-    }
-    animate();
-  </script>
+        window.addEventListener('DOMContentLoaded', initScene);
+    </script>
 </body>
 </html>
