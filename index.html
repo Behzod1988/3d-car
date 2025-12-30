@@ -3,119 +3,135 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>3D Конфигуратор Авто</title>
-    
-    <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.3.0/model-viewer.min.js"></script>
-
+    <title>Моя 3D Машина</title>
+    <!-- Подключаем Google Model Viewer -->
+    <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"></script>
     <style>
-        body { margin: 0; font-family: 'Segoe UI', sans-serif; overflow: hidden; }
-        
-        /* Стиль 3D окна */
-        model-viewer {
-            width: 100vw;
-            height: 100vh;
-            background: radial-gradient(#ffffff, #c5c5c5);
+        /* Стили для полностраничного отображения */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
-
-        /* Панель управления */
-        .ui-panel {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            background: rgba(255, 255, 255, 0.9);
+        body, html {
+            height: 100%;
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        /* Контейнер для заголовка */
+        .header {
+            text-align: center;
             padding: 20px;
+            background-color: rgba(0, 0, 0, 0.2);
+        }
+        /* Основной контейнер для 3D-модели */
+        .model-container {
+            width: 100%;
+            height: calc(100vh - 160px);
+            max-width: 1200px;
+            margin: 0 auto;
             border-radius: 15px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-            z-index: 10;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            background: white;
         }
-
-        .status-badge {
-            display: inline-block;
-            padding: 5px 10px;
-            background: #4CAF50;
-            color: white;
-            border-radius: 5px;
-            font-size: 12px;
+        /* Стили для самого просмотрщика моделей */
+        model-viewer {
+            width: 100%;
+            height: 100%;
+            --progress-bar-color: #667eea;
+        }
+        /* Секция с инструкциями */
+        .instructions {
+            text-align: center;
+            padding: 15px;
+            font-size: 14px;
+            background-color: rgba(0, 0, 0, 0.2);
             margin-top: 10px;
+            border-radius: 8px;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
         }
-
-        button {
-            margin-top: 10px;
-            padding: 8px 15px;
-            border: none;
-            background: #007bff;
-            color: white;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-        
-        button:hover { background: #0056b3; }
-
-        /* Стиль для меток (Hotspots) */
-        .hotspot {
-            background: #fff;
-            border-radius: 50%;
-            border: 2px solid #007bff;
-            width: 15px;
-            height: 15px;
-            cursor: pointer;
+        /* Адаптивность для мобильных устройств */
+        @media (max-width: 768px) {
+            .model-container {
+                height: calc(100vh - 200px);
+                border-radius: 8px;
+            }
+            .instructions {
+                font-size: 12px;
+                padding: 10px;
+            }
         }
     </style>
 </head>
 <body>
-
-    <div class="ui-panel">
-        <h2>Управление авто</h2>
-        <div id="part-name">Нажмите на деталь</div>
-        <div id="status" class="status-badge">Статус: Ожидание</div>
-        <br>
-        <button onclick="setRandomColor()">Случайный цвет детали</button>
+    <!-- Шапка с заголовком -->
+    <div class="header">
+        <h1>🏎️ Моя 3D Машина</h1>
+        <p>Интерактивный просмотр модели в браузере</p>
     </div>
 
-    <model-viewer 
-        id="car" 
-        src="https://raw.githubusercontent.com/Behzod1988/3d-car/refs/heads/main/car.glb" 
-        camera-controls 
-        auto-rotate 
-        shadow-intensity="2" 
-        exposure="1"
-        ar>
-        
-        <button class="hotspot" slot="hotspot-check" data-position="0m 1m 0m" data-normal="0m 1m 0m"></button>
-
-    </model-viewer>
-
-    <script>
-        const modelViewer = document.querySelector("#car");
-        const partDisplay = document.querySelector("#part-name");
-        const statusDisplay = document.querySelector("#status");
-        let selectedMaterial = null;
-
-        // 1. Обработка клика по машине
-        modelViewer.addEventListener('click', (event) => {
-            const material = modelViewer.materialFromPoint(event.clientX, event.clientY);
+    <!-- Основной контейнер для 3D-модели -->
+    <div class="model-container">
+        <!-- Тег Model Viewer - именно здесь отображается ваша модель -->
+        <model-viewer
+            src="car.glb"
+            alt="3D модель автомобиля"
+            camera-controls
+            auto-rotate
+            shadow-intensity="1.5"
+            exposure="1.2"
+            ar
+            camera-orbit="0deg 75deg 8m"
+            environment-image="neutral"
+            interaction-prompt="none"
+            loading="eager"
+        >
+            <!-- Индикатор загрузки -->
+            <div slot="progress-bar">
+                <div class="progress-bar" style="width: 100%; height: 4px; background-color: var(--progress-bar-color);"></div>
+            </div>
             
-            if (material) {
-                selectedMaterial = material;
-                partDisplay.innerHTML = "<b>Выбрано:</b> " + material.name;
-                statusDisplay.innerText = "Статус: Деталь активна";
-                statusDisplay.style.background = "#007bff";
-            }
-        });
+            <!-- Сообщение, если модель не загружается -->
+            <div slot="poster">
+                <div style="display: flex; justify-content: center; align-items: center; height: 100%; color: #333;">
+                    <p>Загружаем 3D-модель...</p>
+                </div>
+            </div>
+            
+            <!-- Кнопка для AR режима -->
+            <button slot="ar-button" style="background-color: #667eea; color: white; border: none; padding: 10px 20px; border-radius: 20px; margin: 10px; cursor: pointer;">
+                👁️ Посмотреть в AR
+            </button>
+        </model-viewer>
+    </div>
 
-        // 2. Функция смены цвета выбранной детали
-        function setRandomColor() {
-            if (selectedMaterial) {
-                // Генерируем случайный цвет в формате [R, G, B, A]
-                const color = [Math.random(), Math.random(), Math.random(), 1];
-                selectedMaterial.pbrMetallicRoughness.setBaseColorFactor(color);
-                statusDisplay.innerText = "Статус: Цвет изменен";
-                statusDisplay.style.background = "#ff9800";
-            } else {
-                alert("Сначала кликните на любую часть машины!");
-            }
-        }
+    <!-- Инструкция по управлению -->
+    <div class="instructions">
+        <p><strong>💡 Как управлять:</strong> Зажмите левую кнопку мыши для вращения • Колесико мыши для масштабирования • Автоматическое вращение включено</p>
+        <p>📱 На мобильных устройствах: используйте касания для вращения и жесты "щипок" для масштабирования</p>
+    </div>
+
+    <!-- Небольшой скрипт для улучшения UX -->
+    <script>
+        // Ждем загрузки DOM
+        document.addEventListener('DOMContentLoaded', function() {
+            const modelViewer = document.querySelector('model-viewer');
+            
+            // Проверяем, загрузилась ли модель
+            modelViewer.addEventListener('load', () => {
+                console.log('✅ 3D модель успешно загружена!');
+            });
+            
+            // Обработка ошибок загрузки
+            modelViewer.addEventListener('error', (event) => {
+                console.error('❌ Ошибка загрузки модели:', event.detail);
+                alert('Не удалось загрузить 3D модель. Проверьте:\n1. Файл car.glb в той же папке\n2. Правильность имени файла\n3. Размер файла (не более 100 МБ)');
+            });
+        });
     </script>
 </body>
 </html>
-
