@@ -3,224 +3,538 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Автомобиль в разрезе</title>
+    <title>Автомобиль - детали кузова</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
-            max-width: 900px;
-            margin: 20px auto;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
             padding: 20px;
+            background-color: #f5f5f5;
         }
         
-        svg {
-            border: 1px solid #ddd;
-            background-color: #f9f9f9;
-            cursor: pointer;
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            color: #7f8c8d;
+        }
+        
+        .car-container {
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+        
+        #car-svg {
+            width: 100%;
+            height: auto;
+            display: block;
+            margin: 0 auto;
         }
         
         .car-body {
-            fill: #4a90e2;
-            stroke: #2c3e50;
+            fill: #3498db;
+            stroke: #2980b9;
             stroke-width: 2;
+            fill-opacity: 0.9;
         }
         
-        .engine {
-            fill: #e74c3c;
-            stroke: #c0392b;
-            stroke-width: 1.5;
-        }
-        
-        .transmission {
-            fill: #f39c12;
-            stroke: #d68910;
-            stroke-width: 1.5;
-        }
-        
-        .interior {
-            fill: #2ecc71;
-            stroke: #27ae60;
-            stroke-width: 1.5;
-        }
-        
-        .wheel {
-            fill: #34495e;
-            stroke: #2c3e50;
-            stroke-width: 1.5;
-        }
-        
-        .fuel-tank {
-            fill: #9b59b6;
-            stroke: #8e44ad;
-            stroke-width: 1.5;
-        }
-        
-        .exhaust {
-            fill: #7f8c8d;
-            stroke: #95a5a6;
-            stroke-width: 1.5;
+        .part {
+            cursor: pointer;
+            transition: all 0.3s ease;
         }
         
         .part:hover {
-            filter: brightness(1.1);
-            stroke-width: 2.5;
-        }
-        
-        #info-panel {
-            margin-top: 20px;
-            padding: 15px;
-            background-color: #f0f0f0;
-            border-radius: 5px;
-            min-height: 60px;
+            filter: brightness(1.2);
         }
         
         .highlight {
-            filter: brightness(1.3) !important;
-            stroke-width: 3px !important;
+            filter: drop-shadow(0 0 8px rgba(52, 152, 219, 0.7));
+        }
+        
+        .info-panel {
+            background-color: #ecf0f1;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 20px;
+            border-left: 5px solid #3498db;
+        }
+        
+        .info-title {
+            color: #2c3e50;
+            margin-top: 0;
+            border-bottom: 2px solid #bdc3c7;
+            padding-bottom: 10px;
+        }
+        
+        .info-content {
+            color: #34495e;
+            line-height: 1.6;
+        }
+        
+        .details-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .detail-card {
+            background-color: white;
+            padding: 15px;
+            border-radius: 6px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .detail-card h4 {
+            margin-top: 0;
+            color: #3498db;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 5px;
+        }
+        
+        .view-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .view-btn {
+            padding: 10px 20px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.3s;
+        }
+        
+        .view-btn:hover {
+            background-color: #2980b9;
+        }
+        
+        .view-btn.active {
+            background-color: #2c3e50;
+        }
+        
+        .part-label {
+            font-size: 14px;
+            font-weight: bold;
+            fill: white;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.7);
+            pointer-events: none;
+            user-select: none;
+        }
+        
+        .exploded-line {
+            stroke: #e74c3c;
+            stroke-width: 2;
+            stroke-dasharray: 5,5;
+            opacity: 0.7;
+        }
+        
+        .legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 20px;
+            justify-content: center;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 3px;
         }
     </style>
 </head>
 <body>
-    <h1>Автомобиль в разрезе</h1>
-    <p>Кликните на деталь для получения информации</p>
+    <div class="header">
+        <h1>Анатомия автомобиля - детали кузова</h1>
+        <p>Кликните на любую деталь для получения подробной информации</p>
+    </div>
     
-    <svg width="850" height="400" id="car-svg">
-        <!-- Кузов автомобиля -->
-        <path class="car-body part" id="body" d="M50,200 Q100,150 200,150 Q300,140 400,150 Q500,160 600,150 Q650,140 700,160 L750,200 L700,300 L600,320 L200,320 L100,300 L50,250 Z" />
-        
-        <!-- Двигатель -->
-        <rect class="engine part" id="engine" x="80" y="160" width="120" height="80" />
-        <text x="140" y="200" text-anchor="middle" fill="white">Двигатель</text>
-        
-        <!-- Коробка передач -->
-        <rect class="transmission part" id="transmission" x="200" y="180" width="80" height="60" />
-        <text x="240" y="210" text-anchor="middle" fill="white">КПП</text>
-        
-        <!-- Салон -->
-        <rect class="interior part" id="interior" x="300" y="160" width="200" height="80" rx="10" />
-        <text x="400" y="200" text-anchor="middle" fill="white">Салон</text>
-        
-        <!-- Топливный бак -->
-        <ellipse class="fuel-tank part" id="fuel-tank" cx="650" cy="180" rx="40" ry="30" />
-        <text x="650" y="185" text-anchor="middle" fill="white">Бак</text>
-        
-        <!-- Выхлопная система -->
-        <path class="exhaust part" id="exhaust" d="M200,240 L220,250 L250,260 L300,270 L350,275 L400,280 L450,285 L500,280 L550,275 L600,270 L650,265 L700,260" stroke-width="8" />
-        
-        <!-- Переднее колесо -->
-        <circle class="wheel part" id="front-wheel" cx="150" cy="320" r="35" />
-        <text x="150" y="325" text-anchor="middle" fill="white">Колесо</text>
-        
-        <!-- Заднее колесо -->
-        <circle class="wheel part" id="rear-wheel" cx="650" cy="320" r="35" />
-        <text x="650" y="325" text-anchor="middle" fill="white">Колесо</text>
-        
-        <!-- Линия разреза -->
-        <line x1="50" y1="200" x2="750" y2="200" stroke="#e74c3c" stroke-width="2" stroke-dasharray="5,5" />
-        
-        <!-- Подписи -->
-        <text x="20" y="195" fill="#e74c3c" font-size="12">Разрез</text>
-        <text x="400" y="380" fill="#2c3e50" font-size="14" text-anchor="middle">Седан в продольном разрезе</text>
-    </svg>
+    <div class="view-buttons">
+        <button class="view-btn active" id="btn-normal">Вид автомобиля</button>
+        <button class="view-btn" id="btn-exploded">Взорванный вид (Exploded)</button>
+        <button class="view-btn" id="btn-3d">3D модель</button>
+    </div>
     
-    <div id="info-panel">
-        <h3>Информация о детали</h3>
-        <p>Кликните на любую деталь автомобиля</p>
+    <div class="car-container">
+        <svg width="960" height="500" viewBox="0 0 1000 600" id="car-svg">
+            <!-- Кузов автомобиля -->
+            <path class="car-body" d="M100,300 Q150,200 250,180 Q350,160 450,180 Q550,200 600,180 Q700,150 800,200 L850,250 L800,350 L700,380 L600,400 L400,400 L300,380 L150,350 L100,300 Z" />
+            
+            <!-- Лобовое стекло -->
+            <path fill="#87CEEB" d="M350,200 Q400,180 450,190 Q500,200 550,190 L550,250 L450,260 L350,250 Z" />
+            
+            <!-- Боковое стекло -->
+            <rect x="450" y="200" width="100" height="60" rx="5" fill="#87CEEB" />
+            
+            <!-- Заднее стекло -->
+            <path fill="#87CEEB" d="M600,200 L700,220 L700,280 L600,260 Z" />
+            
+            <!-- Фара передняя (HEADLIGHT ASSEMBLY) -->
+            <circle class="part" id="headlight" cx="200" cy="220" r="15" fill="#F1C40F" />
+            <text x="200" y="220" class="part-label" text-anchor="middle">Фара</text>
+            
+            <!-- Передний бампер (FRONT BUMPER) -->
+            <rect class="part" id="front-bumper" x="80" y="280" width="120" height="20" rx="5" fill="#E74C3C" />
+            <text x="140" y="295" class="part-label" text-anchor="middle">Бампер</text>
+            
+            <!-- Переднее крыло (FRONT FENDER) -->
+            <path class="part" id="front-fender" d="M150,250 Q180,240 220,250 Q250,260 280,280 L280,350 L150,350 Z" fill="#9B59B6" fill-opacity="0.7" />
+            <text x="200" y="320" class="part-label" text-anchor="middle">Крыло</text>
+            
+            <!-- Передняя дверь (FRONT DOOR) -->
+            <rect class="part" id="front-door" x="300" y="250" width="120" height="130" rx="5" fill="#2ECC71" />
+            <text x="360" y="315" class="part-label" text-anchor="middle">Дверь</text>
+            
+            <!-- Задняя дверь (REAR DOOR) -->
+            <rect class="part" id="rear-door" x="430" y="250" width="120" height="130" rx="5" fill="#2ECC71" />
+            <text x="490" y="315" class="part-label" text-anchor="middle">Дверь</text>
+            
+            <!-- Порог (ROCKER PANEL) -->
+            <rect class="part" id="rocker-panel" x="150" y="350" width="400" height="15" fill="#95A5A6" />
+            <text x="350" y="360" class="part-label" text-anchor="middle">Порог</text>
+            
+            <!-- Боковое зеркало (SIDE MIRROR) -->
+            <ellipse class="part" id="side-mirror" cx="330" cy="230" rx="10" ry="15" fill="#34495E" />
+            <text x="330" y="230" class="part-label" text-anchor="middle" font-size="10">Зеркало</text>
+            
+            <!-- Заднее крыло -->
+            <path class="part" id="rear-fender" d="M600,280 Q650,300 700,280 L750,300 L750,350 L700,380 L600,350 Z" fill="#9B59B6" fill-opacity="0.7" />
+            <text x="680" y="320" class="part-label" text-anchor="middle">Крыло</text>
+            
+            <!-- Задний бампер (REAR BUMPER) -->
+            <rect class="part" id="rear-bumper" x="750" y="300" width="100" height="20" rx="5" fill="#E74C3C" />
+            <text x="800" y="315" class="part-label" text-anchor="middle">Бампер</text>
+            
+            <!-- Задний фонарь -->
+            <rect class="part" id="rear-light" x="850" y="250" width="20" height="40" rx="5" fill="#E74C3C" />
+            
+            <!-- Переднее колесо (FRONT WHEEL) -->
+            <g class="part" id="front-wheel">
+                <circle cx="220" cy="380" r="40" fill="#2C3E50" />
+                <circle cx="220" cy="380" r="25" fill="#7F8C8D" />
+                <circle cx="220" cy="380" r="10" fill="#2C3E50" />
+                <text x="220" y="380" class="part-label" text-anchor="middle">Колесо</text>
+            </g>
+            
+            <!-- Заднее колесо (REAR WHEEL) -->
+            <g class="part" id="rear-wheel">
+                <circle cx="680" cy="380" r="40" fill="#2C3E50" />
+                <circle cx="680" cy="380" r="25" fill="#7F8C8D" />
+                <circle cx="680" cy="380" r="10" fill="#2C3E50" />
+                <text x="680" y="380" class="part-label" text-anchor="middle">Колесо</text>
+            </g>
+            
+            <!-- Линии для взорванного вида (скрыты по умолчанию) -->
+            <g id="exploded-lines" style="display: none;">
+                <line class="exploded-line" x1="200" y1="220" x2="150" y2="150" />
+                <line class="exploded-line" x1="140" y1="295" x2="100" y2="250" />
+                <line class="exploded-line" x1="220" y1="380" x2="220" y2="450" />
+                <line class="exploded-line" x1="330" y1="230" x2="280" y2="180" />
+                <line class="exploded-line" x1="360" y1="315" x2="300" y2="200" />
+                <line class="exploded-line" x1="490" y1="315" x2="550" y2="200" />
+                <line class="exploded-line" x1="680" y1="380" x2="680" y2="450" />
+                <line class="exploded-line" x1="800" y1="315" x2="850" y2="250" />
+            </g>
+            
+            <!-- Элементы для взорванного вида (скрыты по умолчанию) -->
+            <g id="exploded-parts" style="display: none;">
+                <circle cx="150" cy="150" r="15" fill="#F1C40F" />
+                <rect x="100" y="250" width="120" height="20" rx="5" fill="#E74C3C" />
+                <circle cx="220" cy="450" r="40" fill="#2C3E50" />
+                <ellipse cx="280" cy="180" rx="10" ry="15" fill="#34495E" />
+                <rect x="300" y="200" width="120" height="130" rx="5" fill="#2ECC71" />
+                <rect x="550" y="200" width="120" height="130" rx="5" fill="#2ECC71" />
+                <circle cx="680" cy="450" r="40" fill="#2C3E50" />
+                <rect x="850" y="250" width="100" height="20" rx="5" fill="#E74C3C" />
+            </g>
+            
+            <!-- Текст 3D MODEL -->
+            <text x="850" y="100" font-size="24" fill="#3498db" font-weight="bold" id="3d-text" style="display: none;">3D MODEL</text>
+            
+            <!-- Текст EXPLODED VIEW -->
+            <text x="850" y="100" font-size="24" fill="#E74C3C" font-weight="bold" id="exploded-text" style="display: none;">EXPLODED VIEW</text>
+            
+            <!-- Текст SPECIFICATIONS -->
+            <text x="850" y="130" font-size="20" fill="#2C3E50" font-weight="bold" id="specs-text" style="display: none;">SPECIFICATIONS</text>
+        </svg>
+    </div>
+    
+    <div class="info-panel" id="info-panel">
+        <h3 class="info-title">Информация о детали</h3>
+        <div class="info-content" id="info-content">
+            <p>Кликните на любую деталь автомобиля, чтобы увидеть ее описание и характеристики.</p>
+            <p>Используйте кнопки выше для переключения между режимами просмотра:</p>
+            <ul>
+                <li><strong>Вид автомобиля</strong> - стандартное отображение</li>
+                <li><strong>Взорванный вид</strong> - детали разнесены для лучшего обзора</li>
+                <li><strong>3D модель</strong> - схематичное представление 3D</li>
+            </ul>
+        </div>
+    </div>
+    
+    <div class="legend">
+        <div class="legend-item">
+            <div class="legend-color" style="background-color: #F1C40F;"></div>
+            <span>Оптика (фары, фонари)</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color" style="background-color: #E74C3C;"></div>
+            <span>Бамперы</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color" style="background-color: #2ECC71;"></div>
+            <span>Двери</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color" style="background-color: #9B59B6;"></div>
+            <span>Крылья</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color" style="background-color: #2C3E50;"></div>
+            <span>Колеса</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color" style="background-color: #95A5A6;"></div>
+            <span>Пороги и рама</span>
+        </div>
+    </div>
+    
+    <div class="details-grid" id="specifications-grid" style="display: none;">
+        <div class="detail-card">
+            <h4>Габариты</h4>
+            <p>Длина: 4500 мм</p>
+            <p>Ширина: 1850 мм</p>
+            <p>Высота: 1500 мм</p>
+            <p>Колесная база: 2700 мм</p>
+        </div>
+        <div class="detail-card">
+            <h4>Двигатель</h4>
+            <p>Тип: бензиновый</p>
+            <p>Объем: 2.0 л</p>
+            <p>Мощность: 150 л.с.</p>
+            <p>Крутящий момент: 200 Нм</p>
+        </div>
+        <div class="detail-card">
+            <h4>Трансмиссия</h4>
+            <p>Коробка: 6-ст. АКПП</p>
+            <p>Привод: передний</p>
+            <p>Дифференциал: электронный</p>
+        </div>
+        <div class="detail-card">
+            <h4>Кузов</h4>
+            <p>Тип: седан</p>
+            <p>Материал: сталь</p>
+            <p>Количество дверей: 4</p>
+            <p>Класс безопасности: Euro NCAP 5*</p>
+        </div>
     </div>
     
     <script>
-        // Данные о деталях
+        // Информация о деталях
         const partsInfo = {
-            'engine': {
-                name: 'Двигатель',
-                description: 'Двигатель внутреннего сгорания. Преобразует химическую энергию топлива в механическую.',
-                details: 'Объем: 2.0 л, Мощность: 150 л.с., Тип: бензиновый'
+            'headlight': {
+                name: 'Головная фара (HEADLIGHT ASSEMBLY)',
+                description: 'Передняя фара автомобиля, обеспечивающая освещение дороги в темное время суток и в условиях плохой видимости.',
+                details: 'Тип: LED, Цветовая температура: 6000K, Срок службы: 10 000 часов'
             },
-            'transmission': {
-                name: 'Коробка передач',
-                description: 'Механическая или автоматическая трансмиссия. Передает крутящий момент от двигателя к колесам.',
-                details: 'Тип: автоматическая, 6 ступеней'
-            },
-            'interior': {
-                name: 'Салон',
-                description: 'Пассажирское пространство с сиденьями, панелью приборов и системой климат-контроля.',
-                details: 'Количество мест: 5, Кондиционер: есть'
-            },
-            'fuel-tank': {
-                name: 'Топливный бак',
-                description: 'Резервуар для хранения топлива. Обычно расположен в задней части автомобиля.',
-                details: 'Объем: 60 литров, Материал: пластик'
-            },
-            'exhaust': {
-                name: 'Выхлопная система',
-                description: 'Отводит выхлопные газы от двигателя, снижает шум и токсичность выбросов.',
-                details: 'Катализатор: есть, Глушитель: прямоточный'
+            'front-bumper': {
+                name: 'Передний бампер (FRONT BUMPER)',
+                description: 'Защитный элемент передней части автомобиля, предназначенный для поглощения энергии при легких столкновениях.',
+                details: 'Материал: пластик, Цвет: соответствует кузову, Система: с интегрированными противотуманными фарами'
             },
             'front-wheel': {
-                name: 'Переднее колесо',
-                description: 'Ведущее или управляемое колесо с тормозной системой.',
-                details: 'Диаметр: 17", Ширина: 215 мм'
+                name: 'Переднее колесо (FRONT WHEEL)',
+                description: 'Колесо передней оси автомобиля, может быть как ведущим, так и управляемым.',
+                details: 'Размер: 225/45 R18, Диски: легкосплавные, Давление: 2.2-2.5 атм'
+            },
+            'front-fender': {
+                name: 'Переднее крыло (FRONT FENDER)',
+                description: 'Элемент кузова, закрывающий верхнюю часть переднего колеса и защищающий кузов от грязи.',
+                details: 'Материал: сталь, Крепление: болтовое, Аэродинамика: оптимизирована'
+            },
+            'rocker-panel': {
+                name: 'Порог (ROCKER PANEL)',
+                description: 'Элемент кузова, расположенный между передними и задними колесами, усиливающий конструкцию.',
+                details: 'Материал: высокопрочная сталь, Защита: от коррозии, Конструкция: с усилителями'
             },
             'rear-wheel': {
-                name: 'Заднее колесо',
-                description: 'Ведомое колесо с тормозной системой.',
-                details: 'Диаметр: 17", Ширина: 215 мм'
+                name: 'Заднее колесо (REAR WHEEL)',
+                description: 'Колесо задней оси автомобиля, может быть ведущим или свободно катящимся.',
+                details: 'Размер: 225/45 R18, Диски: легкосплавные, Давление: 2.2-2.5 атм'
             },
-            'body': {
-                name: 'Кузов',
-                description: 'Несущая конструкция автомобиля. Обеспечивает безопасность и аэродинамику.',
-                details: 'Тип: седан, Материал: сталь'
+            'rear-bumper': {
+                name: 'Задний бампер (REAR BUMPER)',
+                description: 'Защитный элемент задней части автомобиля, часто включает в себя фонари заднего хода и противотуманные фары.',
+                details: 'Материал: пластик, Цвет: соответствует кузову, Интеграция: с парктрониками'
+            },
+            'side-mirror': {
+                name: 'Боковое зеркало (SIDE MIRROR)',
+                description: 'Наружное зеркало заднего вида, обеспечивающее обзор пространства сбоку и сзади автомобиля.',
+                details: 'Тип: электрорегулируемое, Подогрев: есть, Складывание: автоматическое'
+            },
+            'rear-door': {
+                name: 'Задняя дверь (REAR DOOR)',
+                description: 'Дверь заднего пассажирского отсека, обеспечивающая доступ в салон.',
+                details: 'Открывание: стандартное, Замки: центральные, Безопасность: с усилителями'
+            },
+            'front-door': {
+                name: 'Передняя дверь (FRONT DOOR)',
+                description: 'Дверь переднего пассажирского отсека, включает механизмы управления стеклоподъемниками.',
+                details: 'Открывание: стандартное, Замки: центральные, Стеклоподъемники: электрические'
             }
         };
         
-        // Обработчики кликов
+        // Обработчики кликов на детали
         document.querySelectorAll('.part').forEach(part => {
-            part.addEventListener('click', function() {
+            part.addEventListener('click', function(e) {
+                e.stopPropagation();
+                
                 const partId = this.id;
                 const info = partsInfo[partId];
                 
-                // Подсветка выбранной детали
-                document.querySelectorAll('.part').forEach(p => {
-                    p.classList.remove('highlight');
-                });
-                this.classList.add('highlight');
-                
-                // Обновление информации
-                const infoPanel = document.getElementById('info-panel');
-                infoPanel.innerHTML = `
-                    <h3>${info.name}</h3>
-                    <p><strong>Описание:</strong> ${info.description}</p>
-                    <p><strong>Характеристики:</strong> ${info.details}</p>
-                `;
-                
-                // Анимация (простая)
-                this.style.transform = 'scale(1.05)';
-                setTimeout(() => {
-                    this.style.transform = 'scale(1)';
-                }, 300);
-            });
-            
-            // Эффект при наведении
-            part.addEventListener('mouseenter', function() {
-                this.style.cursor = 'pointer';
+                if (info) {
+                    // Снимаем выделение со всех деталей
+                    document.querySelectorAll('.part').forEach(p => {
+                        p.classList.remove('highlight');
+                    });
+                    
+                    // Подсвечиваем выбранную деталь
+                    this.classList.add('highlight');
+                    
+                    // Обновляем информационную панель
+                    const infoPanel = document.getElementById('info-content');
+                    infoPanel.innerHTML = `
+                        <h4>${info.name}</h4>
+                        <p><strong>Описание:</strong> ${info.description}</p>
+                        <p><strong>Характеристики:</strong> ${info.details}</p>
+                    `;
+                    
+                    // Анимация
+                    this.style.transform = 'scale(1.05)';
+                    setTimeout(() => {
+                        this.style.transform = 'scale(1)';
+                    }, 300);
+                }
             });
         });
         
+        // Обработчики для кнопок просмотра
+        document.getElementById('btn-normal').addEventListener('click', function() {
+            setActiveButton(this);
+            showNormalView();
+        });
+        
+        document.getElementById('btn-exploded').addEventListener('click', function() {
+            setActiveButton(this);
+            showExplodedView();
+        });
+        
+        document.getElementById('btn-3d').addEventListener('click', function() {
+            setActiveButton(this);
+            show3DView();
+        });
+        
+        // Функции для переключения видов
+        function setActiveButton(button) {
+            document.querySelectorAll('.view-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            button.classList.add('active');
+        }
+        
+        function showNormalView() {
+            document.getElementById('exploded-lines').style.display = 'none';
+            document.getElementById('exploded-parts').style.display = 'none';
+            document.getElementById('3d-text').style.display = 'none';
+            document.getElementById('exploded-text').style.display = 'none';
+            document.getElementById('specs-text').style.display = 'none';
+            document.getElementById('specifications-grid').style.display = 'none';
+            
+            // Показываем все основные детали
+            document.querySelectorAll('.part').forEach(part => {
+                part.style.display = '';
+            });
+            
+            // Обновляем информационную панель
+            document.getElementById('info-content').innerHTML = `
+                <p>Кликните на любую деталь автомобиля, чтобы увидеть ее описание и характеристики.</p>
+                <p>Текущий режим: <strong>Стандартный вид автомобиля</strong></p>
+            `;
+        }
+        
+        function showExplodedView() {
+            // Скрываем основные детали
+            document.querySelectorAll('.part').forEach(part => {
+                part.style.display = 'none';
+            });
+            
+            // Показываем линии и детали взорванного вида
+            document.getElementById('exploded-lines').style.display = '';
+            document.getElementById('exploded-parts').style.display = '';
+            document.getElementById('exploded-text').style.display = '';
+            document.getElementById('specs-text').style.display = 'none';
+            document.getElementById('specifications-grid').style.display = 'none';
+            document.getElementById('3d-text').style.display = 'none';
+            
+            // Обновляем информационную панель
+            document.getElementById('info-content').innerHTML = `
+                <h4>Взорванный вид (Exploded View)</h4>
+                <p>В этом режиме детали автомобиля разнесены для наглядного отображения их взаимного расположения и конструкции.</p>
+                <p>Кликните на любую деталь для получения информации о ней.</p>
+            `;
+        }
+        
+        function show3DView() {
+            // Возвращаем детали на место
+            document.querySelectorAll('.part').forEach(part => {
+                part.style.display = '';
+            });
+            
+            // Скрываем линии взорванного вида
+            document.getElementById('exploded-lines').style.display = 'none';
+            document.getElementById('exploded-parts').style.display = 'none';
+            
+            // Показываем 3D текст
+            document.getElementById('3d-text').style.display = '';
+            document.getElementById('specs-text').style.display = '';
+            document.getElementById('specifications-grid').style.display = 'grid';
+            
+            // Добавляем эффект 3D с помощью тени
+            document.getElementById('car-svg').style.filter = 'drop-shadow(5px 5px 10px rgba(0,0,0,0.3))';
+            
+            // Обновляем информационную панель
+            document.getElementById('info-content').innerHTML = `
+                <h4>3D Модель автомобиля</h4>
+                <p>Схематичное представление трехмерной модели автомобиля с указанием основных технических характеристик.</p>
+                <p>Технические характеристики отображены в таблице ниже.</p>
+            `;
+        }
+        
         // Инициализация
-        document.getElementById('info-panel').innerHTML = `
-            <h3>Интерактивная схема автомобиля</h3>
-            <p>Кликайте на цветные детали для получения информации. Всего доступно ${Object.keys(partsInfo).length} основных компонентов.</p>
-            <p><small>Легенда: красный - двигатель, оранжевый - КПП, зеленый - салон, фиолетовый - бак, серый - выхлопная, темно-серый - колеса</small></p>
-        `;
+        showNormalView();
     </script>
-    
-    <div style="margin-top: 30px; padding: 15px; background-color: #f8f9fa; border-radius: 5px;">
-        <h4>Как использовать эту схему:</h4>
-        <ol>
-            <li>Кликните на любую цветную деталь автомобиля</li>
-            <li>Информация появится в панели ниже</li>
-            <li>Для расширения схемы можно добавить больше деталей в код</li>
-        </ol>
-        <p><strong>Чтобы добавить новую деталь:</strong> добавьте новый элемент в SVG и в объект <code>partsInfo</code> в JavaScript.</p>
-    </div>
 </body>
 </html>
