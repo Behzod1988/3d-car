@@ -42,6 +42,11 @@
             margin-bottom: 10px;
         }
 
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
         .main-content {
             display: flex;
             gap: 30px;
@@ -55,55 +60,61 @@
             padding: 20px;
         }
 
-        .car-view {
+        .car-container {
             background: white;
             border-radius: 10px;
             padding: 20px;
-            margin-bottom: 20px;
             box-shadow: 0 5px 15px rgba(0,0,0,0.1);
         }
 
-        .car-view h3 {
-            margin-bottom: 15px;
-            color: #2c3e50;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .car-image-container {
-            position: relative;
+        #car-svg {
             width: 100%;
-            height: 300px;
+            height: auto;
             background: #f5f7fa;
             border-radius: 8px;
-            overflow: hidden;
         }
 
-        .car-image {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-        }
-
-        .interactive-zone {
-            position: absolute;
-            border: 2px solid rgba(52, 152, 219, 0.5);
-            background: rgba(52, 152, 219, 0.2);
+        .car-part {
             cursor: pointer;
             transition: all 0.3s;
+            stroke: #2c3e50;
+            stroke-width: 1;
         }
 
-        .interactive-zone:hover {
-            background: rgba(52, 152, 219, 0.4);
-            border-color: #3498db;
+        .car-part:hover {
+            stroke-width: 2;
+            filter: brightness(1.1);
         }
 
-        .interactive-zone.selected {
-            background: rgba(243, 156, 18, 0.4);
-            border-color: #f39c12;
-            box-shadow: 0 0 10px rgba(243, 156, 18, 0.5);
-            z-index: 10;
+        .car-part.selected {
+            stroke: #f39c12;
+            stroke-width: 3;
+            filter: drop-shadow(0 0 8px rgba(243, 156, 18, 0.5));
+        }
+
+        /* Статусы через JavaScript */
+        .car-part.warning {
+            animation: pulse 2s infinite;
+        }
+
+        .car-part.broken {
+            opacity: 0.6;
+            stroke-dasharray: 5,5;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 0.7; }
+            50% { opacity: 0.4; }
+            100% { opacity: 0.7; }
+        }
+
+        .info-panel {
+            margin-top: 20px;
+            padding: 15px;
+            background: #2c3e50;
+            color: white;
+            border-radius: 8px;
+            text-align: center;
         }
 
         .control-panel {
@@ -142,7 +153,7 @@
             gap: 8px;
         }
 
-        input, textarea, select {
+        input, textarea {
             width: 100%;
             padding: 10px;
             border: 2px solid #ddd;
@@ -165,6 +176,23 @@
             width: 60px;
             height: 40px;
             padding: 2px;
+        }
+
+        .color-presets {
+            display: flex;
+            gap: 10px;
+        }
+
+        .color-preset {
+            width: 30px;
+            height: 30px;
+            border-radius: 6px;
+            cursor: pointer;
+            border: 2px solid transparent;
+        }
+
+        .color-preset:hover {
+            transform: scale(1.1);
         }
 
         .status-buttons {
@@ -245,17 +273,6 @@
             font-size: 1.2rem;
         }
 
-        .part-info h4 {
-            margin-bottom: 5px;
-        }
-
-        .part-status {
-            font-size: 0.9rem;
-            padding: 2px 8px;
-            border-radius: 12px;
-            display: inline-block;
-        }
-
         .save-btn {
             width: 100%;
             padding: 15px;
@@ -290,23 +307,65 @@
 <body>
     <div class="container">
         <header class="header">
-            <h1>Редактор деталей автомобиля</h1>
+            <h1><i class="fas fa-car"></i> Редактор деталей автомобиля</h1>
             <p>Кликайте на детали автомобиля и меняйте их свойства</p>
         </header>
 
         <div class="main-content">
             <div class="car-section">
-                <div class="car-view">
-                    <h3><i class="fas fa-car-front"></i> Вид автомобиля</h3>
-                    <div class="car-image-container" id="car-container">
-                        <img src="https://cdn.pixabay.com/photo/2016/04/01/12/16/car-1300629_1280.png" 
-                             alt="Автомобиль" 
-                             class="car-image" 
-                             id="car-image">
+                <div class="car-container">
+                    <!-- Автомобиль нарисован прямо в SVG -->
+                    <svg id="car-svg" viewBox="0 0 800 400" xmlns="http://www.w3.org/2000/svg">
+                        <!-- Кузов -->
+                        <rect id="body" class="car-part" x="150" y="150" width="500" height="150" rx="20" fill="#3498db" data-id="body" />
                         
-                        <!-- Интерактивные зоны будут добавлены через JavaScript -->
-                    </div>
-                    <div id="part-info" style="margin-top: 15px; text-align: center; color: #666;">
+                        <!-- Капот -->
+                        <rect id="hood" class="car-part" x="150" y="150" width="200" height="80" fill="#2980b9" data-id="hood" />
+                        
+                        <!-- Багажник -->
+                        <rect id="trunk" class="car-part" x="450" y="150" width="200" height="80" fill="#2980b9" data-id="trunk" />
+                        
+                        <!-- Передняя дверь -->
+                        <rect id="door-front" class="car-part" x="350" y="150" width="80" height="120" fill="#1a5276" data-id="door-front" />
+                        
+                        <!-- Задняя дверь -->
+                        <rect id="door-rear" class="car-part" x="450" y="150" width="80" height="120" fill="#1a5276" data-id="door-rear" />
+                        
+                        <!-- Лобовое стекло -->
+                        <rect id="windshield" class="car-part" x="200" y="150" width="150" height="60" rx="5" fill="#aed6f1" data-id="windshield" />
+                        
+                        <!-- Заднее стекло -->
+                        <rect id="rear-window" class="car-part" x="550" y="150" width="100" height="60" rx="5" fill="#aed6f1" data-id="rear-window" />
+                        
+                        <!-- Переднее колесо -->
+                        <circle id="wheel-front" class="car-part" cx="280" cy="320" r="40" fill="#2c3e50" data-id="wheel-front" />
+                        
+                        <!-- Заднее колесо -->
+                        <circle id="wheel-rear" class="car-part" cx="520" cy="320" r="40" fill="#2c3e50" data-id="wheel-rear" />
+                        
+                        <!-- Фара -->
+                        <circle id="headlight" class="car-part" cx="200" cy="200" r="25" fill="#f1c40f" data-id="headlight" />
+                        
+                        <!-- Задний фонарь -->
+                        <circle id="taillight" class="car-part" cx="650" cy="200" r="20" fill="#e74c3c" data-id="taillight" />
+                        
+                        <!-- Зеркало -->
+                        <circle id="mirror" class="car-part" cx="280" cy="170" r="15" fill="#7f8c8d" data-id="mirror" />
+                        
+                        <!-- Передний бампер -->
+                        <rect id="bumper-front" class="car-part" x="150" y="280" width="100" height="20" rx="10" fill="#34495e" data-id="bumper-front" />
+                        
+                        <!-- Задний бампер -->
+                        <rect id="bumper-rear" class="car-part" x="550" y="280" width="100" height="20" rx="10" fill="#34495e" data-id="bumper-rear" />
+                        
+                        <!-- Решетка радиатора -->
+                        <rect id="grill" class="car-part" x="180" y="180" width="120" height="30" rx="5" fill="#2c3e50" data-id="grill" />
+                        
+                        <!-- Линия земли -->
+                        <line x1="50" y1="350" x2="750" y2="350" stroke="#95a5a6" stroke-width="3" stroke-dasharray="5,5" />
+                    </svg>
+                    
+                    <div class="info-panel" id="part-info">
                         <i class="fas fa-mouse-pointer"></i> Выберите деталь автомобиля
                     </div>
                 </div>
@@ -325,11 +384,12 @@
                         <label for="part-color"><i class="fas fa-palette"></i> Цвет</label>
                         <div class="color-picker">
                             <input type="color" id="part-color" value="#3498db">
-                            <div id="color-presets">
-                                <button class="color-preset" style="background:#3498db;" data-color="#3498db"></button>
-                                <button class="color-preset" style="background:#e74c3c;" data-color="#e74c3c"></button>
-                                <button class="color-preset" style="background:#2ecc71;" data-color="#2ecc71"></button>
-                                <button class="color-preset" style="background:#f39c12;" data-color="#f39c12"></button>
+                            <div class="color-presets">
+                                <div class="color-preset" style="background:#3498db;" data-color="#3498db"></div>
+                                <div class="color-preset" style="background:#e74c3c;" data-color="#e74c3c"></div>
+                                <div class="color-preset" style="background:#2ecc71;" data-color="#2ecc71"></div>
+                                <div class="color-preset" style="background:#f39c12;" data-color="#f39c12"></div>
+                                <div class="color-preset" style="background:#9b59b6;" data-color="#9b59b6"></div>
                             </div>
                         </div>
                     </div>
@@ -360,7 +420,7 @@
                 </div>
 
                 <div class="panel">
-                    <h3><i class="fas fa-list"></i> Детали автомобиля</h3>
+                    <h3><i class="fas fa-list"></i> Все детали</h3>
                     <div class="parts-list" id="parts-list">
                         <!-- Список заполнится через JavaScript -->
                     </div>
@@ -369,7 +429,7 @@
         </div>
 
         <div class="footer">
-            <p>© 2024 Редактор деталей автомобиля</p>
+            <p>© 2024 Редактор деталей автомобиля | Все детали кликабельны</p>
         </div>
     </div>
 
