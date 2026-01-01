@@ -1,57 +1,80 @@
-// Данные деталей автомобиля
+// Данные деталей автомобиля (реалистичные SVG пути)
 const carParts = [
     {
         id: "body",
         name: "Кузов",
-        type: "rect",
+        type: "path",
         color: "#3498db",
         status: "working",
         description: "Основной кузов автомобиля",
-        price: 5000,
-        x: 150,
-        y: 100,
-        width: 500,
-        height: 150,
-        rx: 20,
+        price: 8500,
+        svgPath: "M150,180 Q250,120 400,120 Q550,120 650,180 L650,280 Q600,320 400,320 Q200,320 150,280 Z",
         icon: "fas fa-car"
+    },
+    {
+        id: "hood",
+        name: "Капот",
+        type: "path",
+        color: "#2980b9",
+        status: "working",
+        description: "Капот двигателя",
+        price: 1200,
+        svgPath: "M200,180 Q250,140 400,140 Q550,140 600,180 L600,220 Q550,200 400,200 Q250,200 200,220 Z",
+        icon: "fas fa-car-side"
+    },
+    {
+        id: "trunk",
+        name: "Багажник",
+        type: "path",
+        color: "#2980b9",
+        status: "working",
+        description: "Крышка багажника",
+        price: 1100,
+        svgPath: "M600,180 Q650,160 650,180 L650,220 Q600,200 550,220 L550,180 Q575,170 600,180",
+        icon: "fas fa-suitcase"
     },
     {
         id: "windshield",
         name: "Лобовое стекло",
-        type: "polygon",
-        color: "#87CEEB",
+        type: "path",
+        color: "#aed6f1",
         status: "working",
-        description: "Лобовое стекло с подогревом",
-        price: 300,
-        points: "350,100 450,100 500,150 300,150",
+        description: "Лобовое стекло с обогревом",
+        price: 450,
+        svgPath: "M250,180 Q400,140 550,180 L550,200 Q400,160 250,200 Z",
+        icon: "fas fa-window-maximize"
+    },
+    {
+        id: "rear-window",
+        name: "Заднее стекло",
+        type: "path",
+        color: "#aed6f1",
+        status: "working",
+        description: "Заднее стекло",
+        price: 380,
+        svgPath: "M550,180 Q600,160 650,180 L650,200 Q600,180 550,200 Z",
         icon: "fas fa-window-maximize"
     },
     {
         id: "door-front",
         name: "Передняя дверь",
-        type: "rect",
-        color: "#3498db",
+        type: "path",
+        color: "#1a5276",
         status: "warning",
-        description: "Левая передняя дверь",
-        price: 400,
-        x: 300,
-        y: 150,
-        width: 80,
-        height: 100,
+        description: "Передняя левая дверь (скрипит)",
+        price: 650,
+        svgPath: "M300,180 L300,280 Q350,280 400,280 L400,180 Q350,180 300,180",
         icon: "fas fa-door-open"
     },
     {
         id: "door-rear",
         name: "Задняя дверь",
-        type: "rect",
-        color: "#3498db",
+        type: "path",
+        color: "#1a5276",
         status: "working",
-        description: "Левая задняя дверь",
-        price: 400,
-        x: 450,
-        y: 150,
-        width: 80,
-        height: 100,
+        description: "Задняя левая дверь",
+        price: 650,
+        svgPath: "M400,180 L400,280 Q450,280 500,280 L500,180 Q450,180 400,180",
         icon: "fas fa-door-closed"
     },
     {
@@ -60,12 +83,12 @@ const carParts = [
         type: "circle",
         color: "#2c3e50",
         status: "working",
-        description: "Левое переднее колесо 17\"",
-        price: 200,
+        description: "Левое переднее колесо R17",
+        price: 320,
         cx: 280,
-        cy: 280,
+        cy: 300,
         r: 40,
-        icon: "fas fa-circle"
+        icon: "fas fa-tire"
     },
     {
         id: "wheel-rear",
@@ -73,109 +96,106 @@ const carParts = [
         type: "circle",
         color: "#2c3e50",
         status: "replaced",
-        description: "Левое заднее колесо 17\" (заменено 01.2024)",
-        price: 200,
-        cx: 550,
-        cy: 280,
+        description: "Левое заднее колесо R17 (новое)",
+        price: 320,
+        cx: 520,
+        cy: 300,
         r: 40,
-        icon: "fas fa-circle"
+        icon: "fas fa-tire"
     },
     {
         id: "headlight",
-        name: "Фара",
-        type: "circle",
+        name: "Передняя фара",
+        type: "ellipse",
         color: "#f1c40f",
         status: "broken",
-        description: "Левая фара (требует замены)",
-        price: 150,
-        cx: 200,
-        cy: 170,
-        r: 20,
+        description: "Левая фара (разбита)",
+        price: 280,
+        cx: 220,
+        cy: 200,
+        rx: 25,
+        ry: 15,
         icon: "fas fa-lightbulb"
     },
     {
         id: "taillight",
         name: "Задний фонарь",
-        type: "rect",
+        type: "ellipse",
         color: "#e74c3c",
         status: "working",
         description: "Левый задний фонарь",
-        price: 80,
-        x: 650,
-        y: 150,
-        width: 20,
-        height: 40,
-        rx: 5,
+        price: 180,
+        cx: 650,
+        cy: 200,
+        rx: 20,
+        ry: 12,
         icon: "fas fa-traffic-light"
-    },
-    {
-        id: "hood",
-        name: "Капот",
-        type: "polygon",
-        color: "#2980b9",
-        status: "working",
-        description: "Капот двигателя",
-        price: 600,
-        points: "200,100 350,100 300,150 150,150",
-        icon: "fas fa-car-side"
-    },
-    {
-        id: "trunk",
-        name: "Багажник",
-        type: "polygon",
-        color: "#2980b9",
-        status: "working",
-        description: "Крышка багажника",
-        price: 550,
-        points: "500,100 650,100 650,150 550,150",
-        icon: "fas fa-suitcase"
-    },
-    {
-        id: "mirror",
-        name: "Зеркало",
-        type: "circle",
-        color: "#7f8c8d",
-        status: "warning",
-        description: "Левое боковое зеркало (люфт)",
-        price: 75,
-        cx: 250,
-        cy: 140,
-        r: 12,
-        icon: "fas fa-mirror"
     },
     {
         id: "bumper-front",
         name: "Передний бампер",
-        type: "rect",
+        type: "path",
         color: "#34495e",
-        status: "working",
-        description: "Передний бампер",
-        price: 350,
-        x: 150,
-        y: 250,
-        width: 100,
-        height: 30,
-        rx: 10,
+        status: "warning",
+        description: "Передний бампер (царапины)",
+        price: 420,
+        svgPath: "M180,220 Q250,240 320,220",
         icon: "fas fa-grip-lines"
     },
     {
         id: "bumper-rear",
         name: "Задний бампер",
-        type: "rect",
+        type: "path",
         color: "#34495e",
         status: "working",
         description: "Задний бампер",
-        price: 350,
-        x: 550,
-        y: 250,
-        width: 100,
-        height: 30,
-        rx: 10,
+        price: 420,
+        svgPath: "M480,220 Q550,240 620,220",
         icon: "fas fa-grip-lines"
+    },
+    {
+        id: "mirror",
+        name: "Боковое зеркало",
+        type: "ellipse",
+        color: "#7f8c8d",
+        status: "working",
+        description: "Левое боковое зеркало",
+        price: 120,
+        cx: 260,
+        cy: 180,
+        rx: 10,
+        ry: 15,
+        icon: "fas fa-mirror"
+    },
+    {
+        id: "roof",
+        name: "Крыша",
+        type: "path",
+        color: "#1f618d",
+        status: "working",
+        description: "Крыша автомобиля",
+        price: 950,
+        svgPath: "M250,180 Q400,130 550,180",
+        icon: "fas fa-car"
+    },
+    {
+        id: "grill",
+        name: "Решетка радиатора",
+        type: "rect",
+        color: "#2c3e50",
+        status: "working",
+        description: "Передняя решетка",
+        price: 180,
+        x: 240,
+        y: 190,
+        width: 120,
+        height: 20,
+        rx: 5,
+        icon: "fas fa-grip-horizontal"
     }
 ];
 
-// Статусы с описанием
+// Статусы деталей
 const statuses = {
     working: {
         name: "Исправен",
@@ -203,7 +223,7 @@ const statuses = {
     }
 };
 
-// Текущее состояние приложения
+// Состояние приложения
 let appState = {
     selectedPartId: null,
     parts: [...carParts],
@@ -224,12 +244,12 @@ function updateStatistics() {
     return stats;
 }
 
-// Функция для получения детали по ID
+// Получить деталь по ID
 function getPartById(id) {
     return appState.parts.find(part => part.id === id);
 }
 
-// Функция для обновления детали
+// Обновить деталь
 function updatePart(partId, updates) {
     const index = appState.parts.findIndex(part => part.id === partId);
     if (index !== -1) {
@@ -240,14 +260,14 @@ function updatePart(partId, updates) {
     return false;
 }
 
-// Функция для сброса всех изменений
+// Сбросить все изменения
 function resetToDefault() {
-    appState.parts = [...carParts];
+    appState.parts = carParts.map(part => ({ ...part }));
     appState.selectedPartId = null;
     appState.lastModified = new Date().toISOString();
 }
 
-// Основной модуль приложения
+// Основной класс приложения
 class CarEditorApp {
     constructor() {
         this.selectedPart = null;
@@ -255,7 +275,6 @@ class CarEditorApp {
     }
 
     init() {
-        // Инициализация после загрузки DOM
         document.addEventListener('DOMContentLoaded', () => {
             this.renderCar();
             this.setupEventListeners();
@@ -264,15 +283,23 @@ class CarEditorApp {
         });
     }
 
-    // Рендер автомобиля в SVG
+    // Отрисовка автомобиля
     renderCar() {
         const svg = document.getElementById('car-svg');
-        svg.innerHTML = ''; // Очищаем SVG
+        svg.innerHTML = '';
 
+        // Сначала рисуем базовый контур автомобиля
+        const carOutline = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        carOutline.setAttribute('d', 'M150,180 Q250,120 400,120 Q550,120 650,180 L650,280 Q600,320 400,320 Q200,320 150,280 Z');
+        carOutline.setAttribute('fill', '#ecf0f1');
+        carOutline.setAttribute('stroke', '#bdc3c7');
+        carOutline.setAttribute('stroke-width', '3');
+        svg.appendChild(carOutline);
+
+        // Рисуем все детали
         appState.parts.forEach(part => {
             let element;
             
-            // Создаем SVG элемент в зависимости от типа
             switch (part.type) {
                 case 'rect':
                     element = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
@@ -290,21 +317,34 @@ class CarEditorApp {
                     element.setAttribute('r', part.r);
                     break;
                     
-                case 'polygon':
-                    element = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
-                    element.setAttribute('points', part.points);
+                case 'ellipse':
+                    element = document.createElementNS('http://www.w3.org/2000/svg', 'ellipse');
+                    element.setAttribute('cx', part.cx);
+                    element.setAttribute('cy', part.cy);
+                    element.setAttribute('rx', part.rx);
+                    element.setAttribute('ry', part.ry);
+                    break;
+                    
+                case 'path':
+                    element = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                    element.setAttribute('d', part.svgPath);
                     break;
             }
 
             if (element) {
-                // Устанавливаем атрибуты
                 element.setAttribute('id', `part-${part.id}`);
                 element.setAttribute('class', 'car-part');
                 element.setAttribute('fill', part.color);
                 element.setAttribute('data-id', part.id);
                 element.setAttribute('data-status', part.status);
                 
-                // Добавляем стиль в зависимости от статуса
+                // Добавляем обводку для путей
+                if (part.type === 'path') {
+                    element.setAttribute('stroke', '#2c3e50');
+                    element.setAttribute('stroke-width', '1');
+                }
+                
+                // Применяем стиль статуса
                 this.applyStatusStyle(element, part.status);
                 
                 // Обработчик клика
@@ -317,45 +357,45 @@ class CarEditorApp {
             }
         });
 
-        // Добавляем базовые элементы автомобиля (статичные)
+        // Добавляем статичные элементы
         this.addStaticCarElements(svg);
     }
 
-    // Добавляем статичные элементы (рама, линии)
+    // Добавляем статичные элементы
     addStaticCarElements(svg) {
         // Линия земли
         const ground = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-        ground.setAttribute('x1', '50');
-        ground.setAttribute('y1', '320');
-        ground.setAttribute('x2', '750');
-        ground.setAttribute('y2', '320');
+        ground.setAttribute('x1', '100');
+        ground.setAttribute('y1', '350');
+        ground.setAttribute('x2', '700');
+        ground.setAttribute('y2', '350');
         ground.setAttribute('stroke', '#95a5a6');
-        ground.setAttribute('stroke-width', '2');
-        ground.setAttribute('stroke-dasharray', '5,5');
+        ground.setAttribute('stroke-width', '3');
+        ground.setAttribute('stroke-dasharray', '10,5');
         svg.appendChild(ground);
 
         // Тень автомобиля
         const shadow = document.createElementNS('http://www.w3.org/2000/svg', 'ellipse');
         shadow.setAttribute('cx', '400');
-        shadow.setAttribute('cy', '330');
-        shadow.setAttribute('rx', '300');
-        shadow.setAttribute('ry', '20');
+        shadow.setAttribute('cy', '360');
+        shadow.setAttribute('rx', '280');
+        shadow.setAttribute('ry', '25');
         shadow.setAttribute('fill', 'rgba(0,0,0,0.1)');
-        shadow.setAttribute('filter', 'blur(5px)');
+        shadow.setAttribute('filter', 'blur(8px)');
         svg.appendChild(shadow);
     }
 
-    // Применяем стиль в зависимости от статуса
+    // Применение стиля статуса
     applyStatusStyle(element, status) {
-        // Удаляем предыдущие классы статусов
+        // Удаляем старые классы статусов
         ['working', 'warning', 'broken', 'replaced'].forEach(cls => {
             element.classList.remove(cls);
         });
         
-        // Добавляем новый класс статуса
+        // Добавляем новый класс
         element.classList.add(status);
         
-        // Применяем анимацию для предупреждающих статусов
+        // Применяем эффекты
         if (status === 'warning') {
             element.style.animation = 'pulse 2s infinite';
         } else if (status === 'broken') {
@@ -370,17 +410,15 @@ class CarEditorApp {
 
     // Выбор детали
     selectPart(partId) {
-        // Убираем выделение со всех деталей
+        // Снимаем выделение
         document.querySelectorAll('.car-part').forEach(el => {
             el.classList.remove('selected');
         });
-
-        // Снимаем выделение со всех элементов списка
         document.querySelectorAll('.part-item').forEach(el => {
             el.classList.remove('selected');
         });
 
-        // Выделяем выбранную деталь
+        // Выделяем новую деталь
         const partElement = document.querySelector(`[data-id="${partId}"]`);
         const part = getPartById(partId);
         
@@ -389,17 +427,17 @@ class CarEditorApp {
             this.selectedPart = part;
             appState.selectedPartId = partId;
 
-            // Обновляем информацию в панели управления
+            // Обновляем панель управления
             this.updateControlPanel(part);
             
-            // Выделяем соответствующий элемент в списке
+            // Выделяем в списке
             const listItem = document.querySelector(`.part-item[data-id="${partId}"]`);
             if (listItem) {
                 listItem.classList.add('selected');
                 listItem.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
             }
             
-            // Обновляем информацию в оверлее
+            // Обновляем информацию
             document.getElementById('selected-part-info').innerHTML = `
                 <i class="fas ${part.icon}"></i> 
                 <strong>${part.name}</strong> - ${statuses[part.status].name}
@@ -425,6 +463,8 @@ class CarEditorApp {
         // Обновляем пресеты цветов
         document.querySelectorAll('.color-preset').forEach(preset => {
             preset.classList.remove('active');
+            preset.style.borderColor = '';
+            preset.style.transform = '';
             if (preset.dataset.color === part.color) {
                 preset.classList.add('active');
                 preset.style.borderColor = '#3498db';
@@ -435,7 +475,7 @@ class CarEditorApp {
 
     // Настройка обработчиков событий
     setupEventListeners() {
-        // Изменение цвета через color picker
+        // Изменение цвета
         document.getElementById('part-color').addEventListener('input', (e) => {
             this.updatePartColor(e.target.value);
         });
@@ -452,19 +492,19 @@ class CarEditorApp {
         // Кнопки статусов
         document.querySelectorAll('.status-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
-                const status = e.target.dataset.status;
+                const status = e.currentTarget.dataset.status;
                 this.updatePartStatus(status);
             });
         });
 
-        // Описание детали
+        // Описание
         document.getElementById('part-description').addEventListener('input', (e) => {
             if (this.selectedPart) {
                 updatePart(this.selectedPart.id, { description: e.target.value });
             }
         });
 
-        // Стоимость детали
+        // Цена
         document.getElementById('part-price').addEventListener('input', (e) => {
             if (this.selectedPart) {
                 const price = e.target.value ? parseInt(e.target.value) : 0;
@@ -473,30 +513,35 @@ class CarEditorApp {
             }
         });
 
-        // Кнопка сохранения
+        // Сохранение
         document.getElementById('save-btn').addEventListener('click', () => {
             this.saveChanges();
         });
 
-        // Кнопка сброса
+        // Сброс
         document.getElementById('reset-btn').addEventListener('click', () => {
-            if (confirm('Вы уверены, что хотите сбросить все изменения?')) {
+            if (confirm('Сбросить все изменения к исходным значениям?')) {
                 resetToDefault();
                 this.renderCar();
                 this.updatePartsList();
                 this.updateStatistics();
                 this.selectedPart = null;
                 document.getElementById('selected-part-info').innerHTML = 
-                    '<i class="fas fa-mouse-pointer"></i> Выберите деталь автомобиля';
+                    '<i class="fas fa-mouse-pointer"></i> Кликните на любую деталь автомобиля';
                 
-                // Сброс панели управления
+                // Сброс панели
                 document.getElementById('part-name').value = '';
                 document.getElementById('part-description').value = '';
                 document.getElementById('part-price').value = '';
+                
+                // Сброс статусов
+                document.querySelectorAll('.status-btn').forEach(btn => {
+                    btn.classList.remove('active');
+                });
             }
         });
 
-        // Кнопка экспорта
+        // Экспорт
         document.getElementById('export-btn').addEventListener('click', () => {
             this.exportData();
         });
@@ -509,6 +554,7 @@ class CarEditorApp {
             if (partElement) {
                 partElement.setAttribute('fill', color);
                 updatePart(this.selectedPart.id, { color: color });
+                this.updatePartsList();
             }
         }
     }
@@ -522,7 +568,7 @@ class CarEditorApp {
                 partElement.setAttribute('data-status', status);
                 updatePart(this.selectedPart.id, { status: status });
                 
-                // Обновляем информацию в оверлее
+                // Обновляем информацию
                 const part = getPartById(this.selectedPart.id);
                 document.getElementById('selected-part-info').innerHTML = `
                     <i class="fas ${part.icon}"></i> 
@@ -580,18 +626,16 @@ class CarEditorApp {
     // Сохранение изменений
     saveChanges() {
         if (this.selectedPart) {
-            // Здесь можно добавить логику сохранения на сервер
             const part = getPartById(this.selectedPart.id);
-            alert(`Изменения для "${part.name}" сохранены!\nСтатус: ${statuses[part.status].name}`);
+            alert(`Изменения для "${part.name}" сохранены!\nСтатус: ${statuses[part.status].name}\nЦвет: ${part.color}\nЦена: $${part.price}`);
             
-            // Логирование в консоль для отладки
-            console.log('Сохраненное состояние:', {
+            console.log('Сохранено:', {
                 part: part,
                 appState: appState,
                 timestamp: new Date().toISOString()
             });
         } else {
-            alert('Пожалуйста, выберите деталь для сохранения изменений.');
+            alert('Сначала выберите деталь!');
         }
     }
 
@@ -606,16 +650,16 @@ class CarEditorApp {
         const dataStr = JSON.stringify(exportData, null, 2);
         const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
         
-        const exportFileDefaultName = `car-parts-${new Date().toISOString().split('T')[0]}.json`;
+        const exportFileDefaultName = `автомобиль-детали-${new Date().toISOString().split('T')[0]}.json`;
         
         const linkElement = document.createElement('a');
         linkElement.setAttribute('href', dataUri);
         linkElement.setAttribute('download', exportFileDefaultName);
         linkElement.click();
         
-        alert('Данные успешно экспортированы в JSON файл!');
+        alert('Данные экспортированы в JSON файл!');
     }
 }
 
-// Инициализация приложения
+// Запуск приложения
 const app = new CarEditorApp();
