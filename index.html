@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Редактор деталей автомобиля - 5 видов</title>
+    <title>Редактор деталей автомобиля</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     <style>
@@ -22,7 +22,7 @@
         }
 
         .container {
-            max-width: 1600px;
+            max-width: 1400px;
             margin: 0 auto;
             background: white;
             border-radius: 20px;
@@ -40,147 +40,99 @@
         .header h1 {
             font-size: 2.5rem;
             margin-bottom: 10px;
+        }
+
+        .main-content {
             display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 15px;
-        }
-
-        .subtitle {
-            font-size: 1.1rem;
-            opacity: 0.8;
-            font-weight: 300;
-        }
-
-        /* Виды автомобиля */
-        .view-selector {
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-            padding: 20px;
-            background: #f8f9fa;
-            border-bottom: 1px solid #e0e0e0;
-        }
-
-        .view-btn {
-            padding: 12px 25px;
-            background: #ecf0f1;
-            border: 2px solid #bdc3c7;
-            border-radius: 8px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.3s;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .view-btn.active {
-            background: #3498db;
-            color: white;
-            border-color: #2980b9;
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(52, 152, 219, 0.3);
-        }
-
-        .view-btn:hover:not(.active) {
-            background: #d5dbdb;
-            transform: translateY(-1px);
-        }
-
-        /* Сетка автомобилей */
-        .cars-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 20px;
-            padding: 30px;
-        }
-
-        .car-view {
-            background: #f8f9fa;
-            border-radius: 15px;
-            padding: 20px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-            border: 2px solid #e0e0e0;
-            transition: all 0.3s;
-        }
-
-        .car-view.active {
-            border-color: #3498db;
-            box-shadow: 0 15px 40px rgba(52, 152, 219, 0.2);
-        }
-
-        .car-view h3 {
-            color: #2c3e50;
-            margin-bottom: 15px;
-            text-align: center;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-        }
-
-        .car-container {
-            position: relative;
-            background: white;
-            border-radius: 10px;
-            padding: 15px;
-            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.05);
-            min-height: 300px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .car-svg {
-            width: 100%;
-            height: 250px;
-            border-radius: 8px;
-            background: linear-gradient(45deg, #f5f7fa, #c3cfe2);
-        }
-
-        .view-note {
-            margin-top: 15px;
-            padding: 10px;
-            background: #2c3e50;
-            color: white;
-            border-radius: 8px;
-            text-align: center;
-            font-size: 0.9rem;
-        }
-
-        /* Панель управления */
-        .control-panel {
-            display: grid;
-            grid-template-columns: 2fr 1fr;
             gap: 30px;
             padding: 30px;
         }
 
-        .panel-section {
-            background: white;
+        .car-section {
+            flex: 2;
+            background: #f8f9fa;
             border-radius: 15px;
-            padding: 25px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-            border: 1px solid #e0e0e0;
+            padding: 20px;
         }
 
-        .panel-section h3 {
-            color: #2c3e50;
+        .car-view {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
             margin-bottom: 20px;
-            padding-bottom: 10px;
-            border-bottom: 2px solid #3498db;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .car-view h3 {
+            margin-bottom: 15px;
+            color: #2c3e50;
             display: flex;
             align-items: center;
             gap: 10px;
         }
 
-        /* Форма управления */
+        .car-image-container {
+            position: relative;
+            width: 100%;
+            height: 300px;
+            background: #f5f7fa;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .car-image {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .interactive-zone {
+            position: absolute;
+            border: 2px solid rgba(52, 152, 219, 0.5);
+            background: rgba(52, 152, 219, 0.2);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .interactive-zone:hover {
+            background: rgba(52, 152, 219, 0.4);
+            border-color: #3498db;
+        }
+
+        .interactive-zone.selected {
+            background: rgba(243, 156, 18, 0.4);
+            border-color: #f39c12;
+            box-shadow: 0 0 10px rgba(243, 156, 18, 0.5);
+            z-index: 10;
+        }
+
+        .control-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .panel {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .panel h3 {
+            margin-bottom: 20px;
+            color: #2c3e50;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
         .form-group {
             margin-bottom: 20px;
         }
 
-        .form-group label {
+        label {
             display: block;
             margin-bottom: 8px;
             color: #34495e;
@@ -190,67 +142,31 @@
             gap: 8px;
         }
 
-        .readonly-input, textarea, input[type="number"], input[type="color"] {
+        input, textarea, select {
             width: 100%;
-            padding: 12px 15px;
+            padding: 10px;
             border: 2px solid #ddd;
             border-radius: 8px;
             font-size: 1rem;
-            transition: all 0.3s;
-        }
-
-        .readonly-input {
-            background: #f8f9fa;
-            color: #666;
-        }
-
-        textarea:focus, input[type="number"]:focus {
-            outline: none;
-            border-color: #3498db;
-            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
         }
 
         textarea {
             resize: vertical;
+            min-height: 100px;
         }
 
-        /* Цвета */
-        .color-picker-container {
+        .color-picker {
             display: flex;
-            flex-direction: column;
+            align-items: center;
             gap: 15px;
         }
 
-        input[type="color"] {
-            width: 100%;
-            height: 50px;
-            padding: 5px;
-            cursor: pointer;
-            border-radius: 8px;
-            border: 2px solid #ddd;
-        }
-
-        .color-presets {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
-
-        .color-preset {
-            width: 40px;
+        #part-color {
+            width: 60px;
             height: 40px;
-            border-radius: 8px;
-            cursor: pointer;
-            border: 3px solid transparent;
-            transition: all 0.3s;
+            padding: 2px;
         }
 
-        .color-preset:hover {
-            transform: scale(1.1);
-            border-color: #3498db;
-        }
-
-        /* Статусы */
         .status-buttons {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
@@ -258,72 +174,55 @@
         }
 
         .status-btn {
-            padding: 12px;
-            border: none;
+            padding: 10px;
+            border: 2px solid;
             border-radius: 8px;
             cursor: pointer;
             font-weight: 500;
-            transition: all 0.3s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
+            text-align: center;
         }
 
         .status-btn.working {
             background: #e8f6f3;
+            border-color: #27ae60;
             color: #27ae60;
-            border: 2px solid #a3e4d7;
         }
 
         .status-btn.warning {
             background: #fef9e7;
+            border-color: #f39c12;
             color: #f39c12;
-            border: 2px solid #f8c471;
         }
 
         .status-btn.broken {
             background: #fdedec;
+            border-color: #e74c3c;
             color: #e74c3c;
-            border: 2px solid #f1948a;
         }
 
         .status-btn.replaced {
             background: #f4ecf7;
+            border-color: #8e44ad;
             color: #8e44ad;
-            border: 2px solid #c39bd3;
         }
 
         .status-btn.active {
             transform: scale(0.95);
-            box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.2);
+            box-shadow: inset 0 2px 5px rgba(0,0,0,0.2);
         }
 
-        .status-btn:hover:not(.active) {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-        }
-
-        /* Список деталей */
         .parts-list {
-            max-height: 400px;
+            max-height: 300px;
             overflow-y: auto;
-            border-radius: 8px;
-            border: 1px solid #e0e0e0;
         }
 
         .part-item {
             padding: 15px;
             border-bottom: 1px solid #eee;
             cursor: pointer;
-            transition: all 0.3s;
             display: flex;
             align-items: center;
             gap: 15px;
-        }
-
-        .part-item:last-child {
-            border-bottom: none;
         }
 
         .part-item:hover {
@@ -348,192 +247,42 @@
 
         .part-info h4 {
             margin-bottom: 5px;
-            color: #2c3e50;
         }
 
-        .part-info .part-status {
+        .part-status {
             font-size: 0.9rem;
-            padding: 3px 10px;
-            border-radius: 20px;
+            padding: 2px 8px;
+            border-radius: 12px;
             display: inline-block;
         }
 
-        /* Статистика */
-        .stats {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 15px;
-            margin-bottom: 20px;
-        }
-
-        .stat-item {
-            background: #f8f9fa;
-            padding: 15px;
-            border-radius: 10px;
-            text-align: center;
-        }
-
-        .stat-label {
-            display: block;
-            font-size: 0.9rem;
-            color: #666;
-            margin-bottom: 5px;
-        }
-
-        .stat-value {
-            font-size: 1.8rem;
-            font-weight: 700;
-            color: #2c3e50;
-        }
-
-        .stat-value.working { color: #27ae60; }
-        .stat-value.warning { color: #f39c12; }
-        .stat-value.broken { color: #e74c3c; }
-
-        /* Кнопки */
         .save-btn {
             width: 100%;
             padding: 15px;
-            background: linear-gradient(90deg, #3498db, #2980b9);
+            background: #3498db;
             color: white;
             border: none;
             border-radius: 8px;
             font-size: 1.1rem;
             font-weight: 500;
             cursor: pointer;
-            transition: all 0.3s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
+            margin-top: 20px;
         }
 
         .save-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(52, 152, 219, 0.3);
+            background: #2980b9;
         }
 
         .footer {
+            padding: 20px 30px;
             background: #2c3e50;
             color: white;
-            padding: 25px 30px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .footer p {
-            opacity: 0.8;
-        }
-
-        .footer-actions {
-            display: flex;
-            gap: 15px;
-        }
-
-        .btn-primary, .btn-secondary {
-            padding: 12px 25px;
-            border: none;
-            border-radius: 8px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.3s;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .btn-primary {
-            background: linear-gradient(90deg, #2ecc71, #27ae60);
-            color: white;
-        }
-
-        .btn-secondary {
-            background: #7f8c8d;
-            color: white;
-        }
-
-        .btn-primary:hover, .btn-secondary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-        }
-
-        /* Стили для SVG деталей */
-        .car-part {
-            cursor: pointer;
-            transition: all 0.3s;
-            stroke: #2c3e50;
-            stroke-width: 1;
-        }
-
-        .car-part:hover {
-            stroke-width: 2;
-            filter: brightness(1.1);
-        }
-
-        .car-part.selected {
-            stroke: #f39c12;
-            stroke-width: 3;
-            filter: drop-shadow(0 0 8px rgba(243, 156, 18, 0.5));
-        }
-
-        .car-part.working {
-            opacity: 1;
-        }
-
-        .car-part.warning {
-            animation: pulse 2s infinite;
-        }
-
-        .car-part.broken {
-            opacity: 0.6;
-            stroke-dasharray: 5,5;
-        }
-
-        .car-part.replaced {
-            stroke: #8e44ad;
-        }
-
-        /* Анимации */
-        @keyframes pulse {
-            0% { opacity: 0.7; }
-            50% { opacity: 0.4; }
-            100% { opacity: 0.7; }
-        }
-
-        /* Responsive */
-        @media (max-width: 1200px) {
-            .cars-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-            
-            .control-panel {
-                grid-template-columns: 1fr;
-            }
+            text-align: center;
         }
 
         @media (max-width: 768px) {
-            .header h1 {
-                font-size: 2rem;
-            }
-            
-            .cars-grid {
-                grid-template-columns: 1fr;
-            }
-            
-            .view-selector {
-                flex-wrap: wrap;
-            }
-            
-            .view-btn {
-                flex: 1;
-                min-width: 120px;
-            }
-            
-            .footer {
+            .main-content {
                 flex-direction: column;
-                gap: 20px;
-                text-align: center;
             }
         }
     </style>
@@ -541,194 +290,87 @@
 <body>
     <div class="container">
         <header class="header">
-            <h1><i class="fas fa-car"></i> Редактор деталей автомобиля</h1>
-            <p class="subtitle">5 видов автомобиля - спереди, сзади, слева, справа и сверху</p>
+            <h1>Редактор деталей автомобиля</h1>
+            <p>Кликайте на детали автомобиля и меняйте их свойства</p>
         </header>
 
-        <div class="view-selector">
-            <button class="view-btn active" data-view="front">
-                <i class="fas fa-car-front"></i> Спереди
-            </button>
-            <button class="view-btn" data-view="rear">
-                <i class="fas fa-car-rear"></i> Сзади
-            </button>
-            <button class="view-btn" data-view="left">
-                <i class="fas fa-car-side"></i> Слева
-            </button>
-            <button class="view-btn" data-view="right">
-                <i class="fas fa-car-side fa-flip-horizontal"></i> Справа
-            </button>
-            <button class="view-btn" data-view="top">
-                <i class="fas fa-car-alt"></i> Сверху
-            </button>
-        </div>
-
-        <div class="cars-grid">
-            <!-- Вид спереди -->
-            <div class="car-view active" data-view="front">
-                <h3><i class="fas fa-car-front"></i> Вид спереди</h3>
-                <div class="car-container">
-                    <svg id="car-front" class="car-svg" viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg"></svg>
-                </div>
-                <div class="view-note">
-                    <i class="fas fa-mouse-pointer"></i> Кликните на деталь для редактирования
+        <div class="main-content">
+            <div class="car-section">
+                <div class="car-view">
+                    <h3><i class="fas fa-car-front"></i> Вид автомобиля</h3>
+                    <div class="car-image-container" id="car-container">
+                        <img src="https://cdn.pixabay.com/photo/2016/04/01/12/16/car-1300629_1280.png" 
+                             alt="Автомобиль" 
+                             class="car-image" 
+                             id="car-image">
+                        
+                        <!-- Интерактивные зоны будут добавлены через JavaScript -->
+                    </div>
+                    <div id="part-info" style="margin-top: 15px; text-align: center; color: #666;">
+                        <i class="fas fa-mouse-pointer"></i> Выберите деталь автомобиля
+                    </div>
                 </div>
             </div>
 
-            <!-- Вид сзади -->
-            <div class="car-view" data-view="rear">
-                <h3><i class="fas fa-car-rear"></i> Вид сзади</h3>
-                <div class="car-container">
-                    <svg id="car-rear" class="car-svg" viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg"></svg>
-                </div>
-                <div class="view-note">
-                    <i class="fas fa-mouse-pointer"></i> Кликните на деталь для редактирования
-                </div>
-            </div>
+            <div class="control-panel">
+                <div class="panel">
+                    <h3><i class="fas fa-edit"></i> Редактирование детали</h3>
+                    
+                    <div class="form-group">
+                        <label for="part-name"><i class="fas fa-tag"></i> Название</label>
+                        <input type="text" id="part-name" readonly placeholder="Выберите деталь">
+                    </div>
 
-            <!-- Вид слева -->
-            <div class="car-view" data-view="left">
-                <h3><i class="fas fa-car-side"></i> Вид слева</h3>
-                <div class="car-container">
-                    <svg id="car-left" class="car-svg" viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg"></svg>
-                </div>
-                <div class="view-note">
-                    <i class="fas fa-mouse-pointer"></i> Кликните на деталь для редактирования
-                </div>
-            </div>
+                    <div class="form-group">
+                        <label for="part-color"><i class="fas fa-palette"></i> Цвет</label>
+                        <div class="color-picker">
+                            <input type="color" id="part-color" value="#3498db">
+                            <div id="color-presets">
+                                <button class="color-preset" style="background:#3498db;" data-color="#3498db"></button>
+                                <button class="color-preset" style="background:#e74c3c;" data-color="#e74c3c"></button>
+                                <button class="color-preset" style="background:#2ecc71;" data-color="#2ecc71"></button>
+                                <button class="color-preset" style="background:#f39c12;" data-color="#f39c12"></button>
+                            </div>
+                        </div>
+                    </div>
 
-            <!-- Вид справа -->
-            <div class="car-view" data-view="right">
-                <h3><i class="fas fa-car-side fa-flip-horizontal"></i> Вид справа</h3>
-                <div class="car-container">
-                    <svg id="car-right" class="car-svg" viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg"></svg>
-                </div>
-                <div class="view-note">
-                    <i class="fas fa-mouse-pointer"></i> Кликните на деталь для редактирования
-                </div>
-            </div>
+                    <div class="form-group">
+                        <label><i class="fas fa-flag"></i> Статус</label>
+                        <div class="status-buttons">
+                            <button class="status-btn working" data-status="working">Исправен</button>
+                            <button class="status-btn warning" data-status="warning">Внимание</button>
+                            <button class="status-btn broken" data-status="broken">Неисправен</button>
+                            <button class="status-btn replaced" data-status="replaced">Заменен</button>
+                        </div>
+                    </div>
 
-            <!-- Вид сверху -->
-            <div class="car-view" data-view="top">
-                <h3><i class="fas fa-car-alt"></i> Вид сверху</h3>
-                <div class="car-container">
-                    <svg id="car-top" class="car-svg" viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg"></svg>
-                </div>
-                <div class="view-note">
-                    <i class="fas fa-mouse-pointer"></i> Кликните на деталь для редактирования
-                </div>
-            </div>
+                    <div class="form-group">
+                        <label for="part-description"><i class="fas fa-align-left"></i> Описание</label>
+                        <textarea id="part-description" placeholder="Описание детали..."></textarea>
+                    </div>
 
-            <!-- Информация о выбранной детали -->
-            <div class="car-view">
-                <h3><i class="fas fa-info-circle"></i> Информация</h3>
-                <div class="car-container" style="flex-direction: column; justify-content: center; gap: 15px;">
-                    <div id="selected-part-info" style="text-align: center;">
-                        <i class="fas fa-mouse-pointer fa-2x" style="color: #3498db; margin-bottom: 10px;"></i>
-                        <p>Выберите деталь автомобиля</p>
-                        <p class="view-note" style="margin-top: 10px;">Кликните на любую деталь в одном из видов</p>
+                    <div class="form-group">
+                        <label for="part-price"><i class="fas fa-dollar-sign"></i> Стоимость ($)</label>
+                        <input type="number" id="part-price" min="0" placeholder="0">
+                    </div>
+
+                    <button id="save-btn" class="save-btn">
+                        <i class="fas fa-save"></i> Сохранить изменения
+                    </button>
+                </div>
+
+                <div class="panel">
+                    <h3><i class="fas fa-list"></i> Детали автомобиля</h3>
+                    <div class="parts-list" id="parts-list">
+                        <!-- Список заполнится через JavaScript -->
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="control-panel">
-            <div class="panel-section">
-                <h3><i class="fas fa-sliders-h"></i> Управление деталью</h3>
-                
-                <div class="form-group">
-                    <label for="part-name"><i class="fas fa-tag"></i> Название детали</label>
-                    <input type="text" id="part-name" readonly class="readonly-input" placeholder="Выберите деталь">
-                </div>
-
-                <div class="form-group">
-                    <label for="part-color"><i class="fas fa-palette"></i> Цвет детали</label>
-                    <div class="color-picker-container">
-                        <input type="color" id="part-color" value="#3498db">
-                        <div class="color-presets">
-                            <div class="color-preset" style="background-color: #3498db;" data-color="#3498db"></div>
-                            <div class="color-preset" style="background-color: #e74c3c;" data-color="#e74c3c"></div>
-                            <div class="color-preset" style="background-color: #2ecc71;" data-color="#2ecc71"></div>
-                            <div class="color-preset" style="background-color: #f39c12;" data-color="#f39c12"></div>
-                            <div class="color-preset" style="background-color: #9b59b6;" data-color="#9b59b6"></div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label for="part-status"><i class="fas fa-flag"></i> Статус детали</label>
-                    <div class="status-buttons" id="status-buttons">
-                        <button class="status-btn working" data-status="working">
-                            <i class="fas fa-check-circle"></i> Исправен
-                        </button>
-                        <button class="status-btn warning" data-status="warning">
-                            <i class="fas fa-exclamation-triangle"></i> Внимание
-                        </button>
-                        <button class="status-btn broken" data-status="broken">
-                            <i class="fas fa-times-circle"></i> Неисправен
-                        </button>
-                        <button class="status-btn replaced" data-status="replaced">
-                            <i class="fas fa-sync-alt"></i> Заменен
-                        </button>
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label for="part-description"><i class="fas fa-align-left"></i> Описание</label>
-                    <textarea id="part-description" rows="3" placeholder="Описание детали..."></textarea>
-                </div>
-
-                <div class="form-group">
-                    <label for="part-price"><i class="fas fa-dollar-sign"></i> Стоимость ($)</label>
-                    <input type="number" id="part-price" min="0" step="10" placeholder="0">
-                </div>
-
-                <button id="save-btn" class="save-btn">
-                    <i class="fas fa-save"></i> Сохранить изменения
-                </button>
-            </div>
-
-            <div class="panel-section">
-                <h3><i class="fas fa-list"></i> Все детали автомобиля</h3>
-                <div class="parts-list" id="parts-list">
-                    <!-- Список заполнится через JavaScript -->
-                </div>
-                
-                <div style="margin-top: 20px;">
-                    <h3><i class="fas fa-chart-pie"></i> Статистика</h3>
-                    <div class="stats">
-                        <div class="stat-item">
-                            <span class="stat-label">Всего деталей:</span>
-                            <span class="stat-value" id="total-parts">0</span>
-                        </div>
-                        <div class="stat-item">
-                            <span class="stat-label">Исправны:</span>
-                            <span class="stat-value working" id="working-parts">0</span>
-                        </div>
-                        <div class="stat-item">
-                            <span class="stat-label">Требуют внимания:</span>
-                            <span class="stat-value warning" id="warning-parts">0</span>
-                        </div>
-                        <div class="stat-item">
-                            <span class="stat-label">Неисправны:</span>
-                            <span class="stat-value broken" id="broken-parts">0</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
+        <div class="footer">
+            <p>© 2024 Редактор деталей автомобиля</p>
         </div>
-
-        <footer class="footer">
-            <p>© 2024 Редактор автомобильных деталей | 5 видов автомобиля</p>
-            <div class="footer-actions">
-                <button id="reset-btn" class="btn-secondary">
-                    <i class="fas fa-redo"></i> Сбросить всё
-                </button>
-                <button id="export-btn" class="btn-primary">
-                    <i class="fas fa-download"></i> Экспорт данных
-                </button>
-            </div>
-        </footer>
     </div>
 
     <script src="app.js"></script>
