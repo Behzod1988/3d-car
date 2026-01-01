@@ -2,148 +2,594 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Premium Car Inspector</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Редактор деталей автомобиля</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --bg: #0b0f19;
-            --card: #161b26;
-            --border: #2d3343;
-            --accent: #00f2ff;
-            --ok: #00ff88;
-            --warn: #f39c12;
-            --danger: #ff4d4d;
+        /* Reset и базовые стили */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
 
-        body { 
-            background: var(--bg); color: #fff; font-family: 'Segoe UI', Roboto, sans-serif; 
-            margin: 0; padding: 40px; display: flex; flex-direction: column; align-items: center;
+        body {
+            font-family: 'Roboto', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
         }
 
-        h1 { font-weight: 200; letter-spacing: 5px; color: var(--accent); text-shadow: 0 0 15px rgba(0,242,255,0.3); }
-        
-        .grid { 
-            display: grid; grid-template-columns: repeat(3, 1fr); gap: 25px; 
-            max-width: 1100px; width: 100%; margin-top: 30px;
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
         }
 
-        .view-card {
-            background: var(--card); border: 1px solid var(--border); border-radius: 20px;
-            padding: 25px; position: relative; transition: 0.3s;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        /* Header */
+        .header {
+            background: linear-gradient(90deg, #2c3e50, #34495e);
+            color: white;
+            padding: 30px;
+            text-align: center;
         }
 
-        .view-card:hover { border-color: var(--accent); }
-        .view-card h3 { margin: 0 0 15px 0; font-size: 12px; text-transform: uppercase; color: #64748b; letter-spacing: 2px; }
-
-        svg { width: 100%; height: auto; filter: drop-shadow(0 0 2px rgba(0,0,0,0.5)); }
-
-        /* Стили деталей */
-        .part {
-            fill: #252b37; stroke: #3f4759; stroke-width: 1;
-            cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
         }
 
-        .part:hover { stroke: var(--accent); stroke-width: 1.5; filter: brightness(1.2); }
-
-        /* Стекла */
-        .glass { fill: rgba(0, 242, 255, 0.05); stroke: #2d3343; pointer-events: none; }
-
-        /* Цвета состояний */
-        .status-ok { fill: rgba(0, 255, 136, 0.3) !important; stroke: var(--ok) !important; }
-        .status-warn { fill: rgba(243, 156, 18, 0.3) !important; stroke: var(--warn) !important; }
-        .status-danger { fill: rgba(255, 77, 77, 0.3) !important; stroke: var(--danger) !important; }
-
-        /* Легенда */
-        .legend {
-            margin-top: 40px; display: flex; gap: 30px;
-            background: rgba(255,255,255,0.05); padding: 15px 40px; border-radius: 50px;
+        .subtitle {
+            font-size: 1.1rem;
+            opacity: 0.8;
+            font-weight: 300;
         }
-        .l-item { display: flex; align-items: center; gap: 10px; font-size: 13px; color: #94a3b8; }
-        .dot { width: 10px; height: 10px; border-radius: 50%; box-shadow: 0 0 10px currentColor; }
+
+        /* Main content layout */
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            gap: 30px;
+            padding: 30px;
+        }
+
+        /* Car Section */
+        .car-section {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .car-container {
+            position: relative;
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        #car-svg {
+            width: 100%;
+            height: auto;
+            border-radius: 8px;
+            background: linear-gradient(45deg, #f5f7fa, #c3cfe2);
+        }
+
+        .car-overlay {
+            margin-top: 20px;
+            padding: 15px;
+            background: #2c3e50;
+            color: white;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .selected-part-info {
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        /* Control Panel */
+        .control-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+
+        .panel-section {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e0e0e0;
+        }
+
+        .panel-section h3 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #3498db;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* Form controls */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #34495e;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .readonly-input, textarea, input[type="number"], input[type="color"] {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+
+        .readonly-input {
+            background: #f8f9fa;
+            color: #666;
+        }
+
+        textarea:focus, input[type="number"]:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+        }
+
+        textarea {
+            resize: vertical;
+        }
+
+        /* Color picker */
+        .color-picker-container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        input[type="color"] {
+            width: 100%;
+            height: 50px;
+            padding: 5px;
+            cursor: pointer;
+            border-radius: 8px;
+            border: 2px solid #ddd;
+        }
+
+        .color-presets {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .color-preset {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            cursor: pointer;
+            border: 3px solid transparent;
+            transition: all 0.3s;
+        }
+
+        .color-preset:hover {
+            transform: scale(1.1);
+            border-color: #3498db;
+        }
+
+        /* Status buttons */
+        .status-buttons {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+
+        .status-btn {
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .status-btn.working {
+            background: #e8f6f3;
+            color: #27ae60;
+            border: 2px solid #a3e4d7;
+        }
+
+        .status-btn.warning {
+            background: #fef9e7;
+            color: #f39c12;
+            border: 2px solid #f8c471;
+        }
+
+        .status-btn.broken {
+            background: #fdedec;
+            color: #e74c3c;
+            border: 2px solid #f1948a;
+        }
+
+        .status-btn.replaced {
+            background: #f4ecf7;
+            color: #8e44ad;
+            border: 2px solid #c39bd3;
+        }
+
+        .status-btn.active {
+            transform: scale(0.95);
+            box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        .status-btn:hover:not(.active) {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Parts list */
+        .parts-list {
+            max-height: 300px;
+            overflow-y: auto;
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
+        }
+
+        .part-item {
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .part-item:last-child {
+            border-bottom: none;
+        }
+
+        .part-item:hover {
+            background: #f8f9fa;
+        }
+
+        .part-item.selected {
+            background: #e3f2fd;
+            border-left: 4px solid #3498db;
+        }
+
+        .part-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.2rem;
+        }
+
+        .part-info h4 {
+            margin-bottom: 5px;
+            color: #2c3e50;
+        }
+
+        .part-info .part-status {
+            font-size: 0.9rem;
+            padding: 3px 10px;
+            border-radius: 20px;
+            display: inline-block;
+        }
+
+        /* Statistics */
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+
+        .stat-item {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .stat-label {
+            display: block;
+            font-size: 0.9rem;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #2c3e50;
+        }
+
+        .stat-value.working { color: #27ae60; }
+        .stat-value.warning { color: #f39c12; }
+        .stat-value.broken { color: #e74c3c; }
+
+        /* Buttons */
+        .save-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(90deg, #3498db, #2980b9);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .save-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(52, 152, 219, 0.3);
+        }
+
+        /* Footer */
+        .footer {
+            background: #2c3e50;
+            color: white;
+            padding: 25px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .footer p {
+            opacity: 0.8;
+        }
+
+        .footer-actions {
+            display: flex;
+            gap: 15px;
+        }
+
+        .btn-primary, .btn-secondary {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(90deg, #2ecc71, #27ae60);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: #7f8c8d;
+            color: white;
+        }
+
+        .btn-primary:hover, .btn-secondary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        /* SVG стили через JavaScript, но базовые */
+        .car-part {
+            cursor: pointer;
+            transition: all 0.3s;
+            stroke: #2c3e50;
+            stroke-width: 2;
+        }
+
+        .car-part:hover {
+            stroke-width: 3;
+            filter: brightness(1.1);
+        }
+
+        .car-part.selected {
+            stroke: #f39c12;
+            stroke-width: 4;
+            filter: drop-shadow(0 0 10px rgba(243, 156, 18, 0.7));
+        }
+
+        /* Анимации */
+        @keyframes pulse {
+            0% { opacity: 0.7; }
+            50% { opacity: 0.4; }
+            100% { opacity: 0.7; }
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .control-panel {
+                order: -1;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .main-content {
+                padding: 20px;
+            }
+            
+            .footer {
+                flex-direction: column;
+                gap: 20px;
+                text-align: center;
+            }
+        }
     </style>
 </head>
 <body>
+    <div class="container">
+        <header class="header">
+            <h1><i class="fas fa-car"></i> Редактор деталей автомобиля</h1>
+            <p class="subtitle">Выделяйте детали, меняйте цвета и статусы</p>
+        </header>
 
-    <h1>VEHICLE SCANNER</h1>
+        <main class="main-content">
+            <div class="car-section">
+                <div class="car-container">
+                    <svg id="car-svg" viewBox="0 0 800 400" xmlns="http://www.w3.org/2000/svg">
+                        <!-- Автомобиль будет отрисован через JavaScript -->
+                    </svg>
+                    <div class="car-overlay">
+                        <div class="selected-part-info" id="selected-part-info">
+                            <i class="fas fa-mouse-pointer"></i> Выберите деталь автомобиля
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-    <div class="grid">
-        <div class="view-card">
-            <h3>Left Side</h3>
-            <svg viewBox="0 0 300 100">
-                <path class="part" id="l-fender" d="M15,65 Q15,40 50,38 L85,35 L90,75 L20,78 Z" />
-                <path class="part" id="l-door-f" d="M92,35 L160,33 L160,82 L92,82 Z" />
-                <path class="part" id="l-door-r" d="M162,33 L235,35 L235,82 L162,82 Z" />
-                <path class="part" id="l-quarter" d="M237,35 L285,48 Q295,55 295,72 L237,82 Z" />
-                <path class="glass" d="M95,37 L158,35 L158,60 L98,62 Z M165,35 L230,37 L230,62 L165,60 Z" />
-                <circle class="part" cx="60" cy="80" r="18" />
-                <circle class="part" cx="245" cy="80" r="18" />
-            </svg>
-        </div>
+            <div class="control-panel">
+                <div class="panel-section">
+                    <h3><i class="fas fa-sliders-h"></i> Управление деталью</h3>
+                    
+                    <div class="form-group">
+                        <label for="part-name"><i class="fas fa-tag"></i> Название детали</label>
+                        <input type="text" id="part-name" readonly class="readonly-input">
+                    </div>
 
-        <div class="view-card">
-            <h3>Top View</h3>
-            <svg viewBox="0 0 120 280">
-                <path class="part" id="t-hood" d="M25,35 Q60,10 95,35 L100,85 L20,85 Z" />
-                <rect class="part" id="t-roof" x="22" y="90" width="76" height="100" rx="15" />
-                <path class="part" id="t-trunk" d="M25,255 Q60,275 95,255 L100,195 L20,195 Z" />
-                <path class="glass" d="M28,87 L92,87 L88,105 L32,105 Z" />
-            </svg>
-        </div>
+                    <div class="form-group">
+                        <label for="part-color"><i class="fas fa-palette"></i> Цвет детали</label>
+                        <div class="color-picker-container">
+                            <input type="color" id="part-color" value="#3498db">
+                            <div class="color-presets">
+                                <div class="color-preset" style="background-color: #3498db;" data-color="#3498db"></div>
+                                <div class="color-preset" style="background-color: #e74c3c;" data-color="#e74c3c"></div>
+                                <div class="color-preset" style="background-color: #2ecc71;" data-color="#2ecc71"></div>
+                                <div class="color-preset" style="background-color: #f39c12;" data-color="#f39c12"></div>
+                                <div class="color-preset" style="background-color: #9b59b6;" data-color="#9b59b6"></div>
+                            </div>
+                        </div>
+                    </div>
 
-        <div class="view-card">
-            <h3>Right Side</h3>
-            <svg viewBox="0 0 300 100">
-                <path class="part" id="r-quarter" d="M15,72 Q15,55 25,48 L73,35 L73,82 L15,72 Z" />
-                <path class="part" id="r-door-r" d="M75,35 L148,33 L148,82 L75,82 Z" />
-                <path class="part" id="r-door-f" d="M150,33 L218,35 L218,82 L150,82 Z" />
-                <path class="part" id="r-fender" d="M220,35 L255,38 Q295,40 295,65 L230,78 Z" />
-                <circle class="part" cx="65" cy="80" r="18" />
-                <circle class="part" cx="250" cy="80" r="18" />
-            </svg>
-        </div>
+                    <div class="form-group">
+                        <label for="part-status"><i class="fas fa-flag"></i> Статус детали</label>
+                        <div class="status-buttons" id="status-buttons">
+                            <button class="status-btn working active" data-status="working">
+                                <i class="fas fa-check-circle"></i> Исправен
+                            </button>
+                            <button class="status-btn warning" data-status="warning">
+                                <i class="fas fa-exclamation-triangle"></i> Внимание
+                            </button>
+                            <button class="status-btn broken" data-status="broken">
+                                <i class="fas fa-times-circle"></i> Неисправен
+                            </button>
+                            <button class="status-btn replaced" data-status="replaced">
+                                <i class="fas fa-sync-alt"></i> Заменен
+                            </button>
+                        </div>
+                    </div>
 
-        <div class="view-card" style="grid-column: span 1.5">
-            <h3>Front View</h3>
-            <svg viewBox="0 0 200 100">
-                <path class="part" id="f-hood" d="M40,25 L160,25 Q180,65 180,65 L20,65 Z" />
-                <path class="part" id="f-bumper" d="M15,70 L185,70 L180,95 L20,95 Z" />
-                <rect class="part" x="25" y="55" width="35" height="12" rx="6" />
-                <rect class="part" x="140" y="55" width="35" height="12" rx="6" />
-                <path class="glass" d="M50,22 L150,22 L145,5 L55,5 Z" />
-            </svg>
-        </div>
+                    <div class="form-group">
+                        <label for="part-description"><i class="fas fa-align-left"></i> Описание</label>
+                        <textarea id="part-description" rows="3" placeholder="Добавьте описание детали..."></textarea>
+                    </div>
 
-        <div class="view-card" style="grid-column: span 1.5">
-            <h3>Rear View</h3>
-            <svg viewBox="0 0 200 100">
-                <path class="part" id="b-trunk" d="M45,35 L155,35 Q175,75 175,75 L25,75 Z" />
-                <path class="part" id="b-bumper" d="M15,80 L185,80 L180,100 L20,100 Z" />
-                <rect class="part" x="20" y="60" width="35" height="15" rx="4" style="fill:#4a1010" />
-                <rect class="part" x="145" y="60" width="35" height="15" rx="4" style="fill:#4a1010" />
-            </svg>
-        </div>
+                    <div class="form-group">
+                        <label for="part-price"><i class="fas fa-dollar-sign"></i> Стоимость ($)</label>
+                        <input type="number" id="part-price" min="0" step="10" placeholder="Введите стоимость">
+                    </div>
+
+                    <button id="save-btn" class="save-btn">
+                        <i class="fas fa-save"></i> Сохранить изменения
+                    </button>
+                </div>
+
+                <div class="panel-section">
+                    <h3><i class="fas fa-list"></i> Список деталей</h3>
+                    <div class="parts-list" id="parts-list">
+                        <!-- Список деталей будет заполнен через JavaScript -->
+                    </div>
+                </div>
+
+                <div class="panel-section">
+                    <h3><i class="fas fa-chart-pie"></i> Статистика</h3>
+                    <div class="stats">
+                        <div class="stat-item">
+                            <span class="stat-label">Всего деталей:</span>
+                            <span class="stat-value" id="total-parts">0</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Исправны:</span>
+                            <span class="stat-value working" id="working-parts">0</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Требуют внимания:</span>
+                            <span class="stat-value warning" id="warning-parts">0</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Неисправны:</span>
+                            <span class="stat-value broken" id="broken-parts">0</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <footer class="footer">
+            <p>© 2024 Редактор деталей автомобиля | Используйте мышь для выделения деталей</p>
+            <div class="footer-actions">
+                <button id="reset-btn" class="btn-secondary">
+                    <i class="fas fa-redo"></i> Сбросить все
+                </button>
+                <button id="export-btn" class="btn-primary">
+                    <i class="fas fa-download"></i> Экспорт данных
+                </button>
+            </div>
+        </footer>
     </div>
 
-    <div class="legend">
-        <div class="l-item"><span class="dot" style="color:var(--ok); background:var(--ok)"></span> Идеально</div>
-        <div class="l-item"><span class="dot" style="color:var(--warn); background:var(--warn)"></span> Царапины</div>
-        <div class="l-item"><span class="dot" style="color:var(--danger); background:var(--danger)"></span> Повреждено</div>
-    </div>
-
-    <script>
-        document.querySelectorAll('.part').forEach(p => {
-            p.addEventListener('click', function() {
-                if (this.classList.contains('status-ok')) {
-                    this.classList.replace('status-ok', 'status-warn');
-                } else if (this.classList.contains('status-warn')) {
-                    this.classList.replace('status-warn', 'status-danger');
-                } else if (this.classList.contains('status-danger')) {
-                    this.classList.remove('status-danger');
-                } else {
-                    this.classList.add('status-ok');
-                }
-            });
-        });
-    </script>
+    <script src="app.js"></script>
 </body>
 </html>
